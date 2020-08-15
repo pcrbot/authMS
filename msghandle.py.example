@@ -9,9 +9,9 @@ if hoshino.config.authMS.auth_config.ENABLE_COM:
 else:
     path_first = './'
     
-key_dict = SqliteDict(f'{path_first}key.sqlite', autocommit=True)
-group_dict = SqliteDict(f'{path_first}key.sqlite', autocommit=True)
-trial_list = SqliteDict(f'{path_first}key.sqlite', autocommit=True) # 试用列表
+key_dict = SqliteDict(path_first+'key.sqlite', autocommit=True)
+group_dict = SqliteDict(path_first+'group.sqlite', autocommit=True)
+trial_list = SqliteDict(path_first+'trial.sqlite', autocommit=True) # 试用列表
 
 @message_preprocessor
 async def handle_message(bot, event: CQEvent, _):
