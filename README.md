@@ -1,11 +1,14 @@
 # authMS
 
-适用于HoshinoBot v2的授权插件, 大部分功能以天枢授权为蓝本而开发。本插件另有带有web服务的页面, 请参见相关链接. 本项目主体框架由[wdvxdr1123](https://github.com/wdvxdr1123)构建, 火龙|PurinBot添加了一些重要功能. 
+适用于HoshinoBot v2的授权插件, 大部分功能以天枢授权为蓝本而开发。本插件另有带有web服务的页面, 如果需要请在目录下新建vue目录,并下载相关链接中已编译好的文件放入(可能由于版本问题会有不兼容). 本项目主体框架由[wdvxdr1123](https://github.com/wdvxdr1123)构建, 火龙|PurinBot添加了一些重要功能. 
 
 相关链接：
 本项目地址：https://github.com/pcrbot/authMS
+
 HoshinoBot项目地址：https://github.com/Ice-Cirno/HoshinoBot
-https://github.com/wdvxdr1123/pcr-auth-vue
+
+编译好的vue：https://github.com/wdvxdr1123/pcr-auth-vue
+
 ## 特点
 * **无GUI** ,不依赖Native环境, 依托于nonebot架构, 对不同的操作系统友好
 * 支持新群试用
