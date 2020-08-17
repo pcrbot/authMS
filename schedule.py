@@ -35,7 +35,7 @@ async def check_auth_sdj():
             hoshino.logger.info(f'正在检查群{gid}的授权......')
             # 此群已有授权或曾有授权, 检查是否过期
             time_left = group_dict[gid] - datetime.now()
-            days_left = time_left.days
+            days_left = time_left.days  
 
             if time_left.total_seconds() <= 0:
                 # 已过期
@@ -80,8 +80,8 @@ async def check_auth_sdj():
             # 正常情况下, 无论是50人以上群还是50人以下群, 都需要经过机器人同意或检查
             # 但是！如果机器人掉线期间被拉进群试用, 将无法处理试用, 因此有了这部分憨批代码
 
-            if not config.NEW_GROUP_DAYS:
-                # 无新群试用机制,直接退群
+            if not config.NEW_GROUP_DAYS and config.AUTO_LEAVE:
+                # 无新群试用机制
                 await bot.send_group_msg(group_id=gid,message=config.GROUP_LEAVE_MSG)
                 hoshino.logger.info(f'发现无记录而被自动拉入的新群{gid}, 已退出此群')
                 await bot.set_group_leave(group_id=gid)
