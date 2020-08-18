@@ -1,7 +1,3 @@
-'''
-贡献名单：
-wdvxdr1123,火龙|PurinBot,var-mixer
-'''
 from datetime import *
 import re, asyncio
 import nonebot
@@ -57,7 +53,7 @@ async def key_list_chat(session):
     if session.event.user_id not in hoshino.config.SUPERUSERS:
         return
     if session.event.detail_type == 'group':
-        # 群聊生成卡密你可真是个小天才
+        # 群聊查看卡密你可真是个小天才
         await session.finish('请机器人维护者私聊机器人查看剩余卡密')
 
     if not session.current_arg.strip():
@@ -322,3 +318,20 @@ async def view_aut_list(session):
         else:
             await session.finish(f'该卡密无效!')
 
+@on_command('变更所有授权', only_to_me=False)
+async def add_time_all_chat(session):
+    '''
+    为所有已有授权的群增加授权x天, 可用于维护补偿时间等场景
+    '''
+    if session.event.user_id not in hoshino.config.SUPERUSERS:
+        return
+    if not session.current_arg:
+        await session.finish('请发送需要为所有群增加或减少的时常, 例如“变更所有授权 7”')
+    
+    days = int(session.current_arg.strip())
+
+    authed_group_list = util.get_authed_group_list()
+    for ginfo in authed_group_list:
+        util.change_authed_time(ginfo['gid'], days)
+    
+    await session.finish(f'已为所有群授权增加{days}天')
