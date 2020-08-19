@@ -26,6 +26,7 @@ except:
 async def creat_key_chat(session):
     if session.event.user_id not in hoshino.config.SUPERUSERS:
         # 非超管, 忽略
+        await session.finish('只有主人才能生成卡密哦')
         return
     if session.event.detail_type == 'group':
         # 群聊生成卡密你可真是个小天才
@@ -51,11 +52,11 @@ async def creat_key_chat(session):
 @on_command('卡密列表', only_to_me=True)
 async def key_list_chat(session):
     if session.event.user_id not in hoshino.config.SUPERUSERS:
+        await session.finish('只有主人才能查看卡密列表哦')
         return
     if session.event.detail_type == 'group':
         # 群聊查看卡密你可真是个小天才
-        await session.finish('请机器人维护者私聊机器人查看剩余卡密')
-
+        await session.finish('憨批！私聊我查看剩余卡密啦！')
     if not session.current_arg.strip():
         # 无其他参数默认第一页
         page = 1  
@@ -85,13 +86,14 @@ async def key_list_chat(session):
     await session.send(msg)
 
 
-@on_command('授权列表', aliases=('查看授权列表', '查看全部授权', '查询全部授权'), only_to_me=False)
+@on_command('授权列表', aliases=('查看授权列表', '查看全部授权', '查询全部授权'), only_to_me=True)
 async def group_list_chat(session):
     '''
     此指令获得的是, 所有已经获得授权的群, 其中一些群可能Bot并没有加入 \n
     当授权群过多时,每页只显示5条
     '''
     if session.event.user_id not in hoshino.config.SUPERUSERS:
+        await session.finish('只有主人才能查看授权列表哦')
         return
     if session.event.detail_type == 'group':
         # 群聊查看授权列表你也是个小天才
@@ -105,7 +107,7 @@ async def group_list_chat(session):
 
     msg = '======授权列表======\n'
 
-    authed_group_list = util.get_authed_group_list()
+    authed_group_list = await util.get_authed_group_list()
     length = len(authed_group_list)
     pages_all = ceil(length/5) # 向上取整
     if page > pages_all:
@@ -193,6 +195,7 @@ async def reg_group_chat(session):
 @on_command('变更授权',aliases=('更改时间', '授权', '更改授权时间', '更新授权'),only_to_me=False)
 async def add_time_chat(session):
     if session.event.user_id not in hoshino.config.SUPERUSERS:
+        await session.finish('只有主人才能变更授权哦')
         return
     origin = session.current_arg.strip()
     pattern = re.compile(r'^(\d{5,15})([+-]\d{1,5})$')
@@ -208,40 +211,26 @@ async def add_time_chat(session):
 
 @on_command('转移授权', only_to_me=False)
 async def group_change_chat(session):
-
-    uid = session.event.user_id
-    if uid not in hoshino.config.SUPERUSERS:
-        session.finish('仅超级管理员可转移授权')
-
+    if session.event.user_id not in hoshino.config.SUPERUSERS:
+        session.finish('只有主人才能转移授权哦')
+        return
     if not session.current_arg:
         await session.finish('请发送“转移授权 旧群群号*新群群号”来进行群授权转移')
-    today = datetime.now()
     origin = session.current_arg.strip()
     pattern = re.compile(r'^(\d{5,15})\*(\d{5,15})$')
     m = pattern.match(origin)
     if m is None:
-        await session.finish(
-            '格式错误或者群号错误XD\n请发送“转移授权 旧群群号*新群群号”来转移群授权时长\n如果新群已经授权, 则会增加对应时长。')
-    o_gid = int(m.group(1))
-    o_gid = int(m.group(2))
-    if o_gid in group_dict:
-        left_time = group_dict[o_gid] - today
-        group_dict[o_gid] = group_dict[o_gid] + left_time
-        group_dict.pop(o_gid)
-        await session.send(
-            f"授权转移成功~\n旧群【{o_gid}】授权已清空\n新群【{o_gid}】授权到期时间：{group_dict[o_gid].isoformat()}"
-        )
-    else:
-        group_dict[o_gid] = group_dict[o_gid]
-        group_dict.pop(o_gid)
-        await session.send(
-            f"授权转移成功~\n旧群【{o_gid}】授权已清空\n新群【{o_gid}】授权到期时间：{group_dict[o_gid].isoformat()}"
-        )
+        await session.finish('格式错误或者群号错误XD\n请发送“转移授权 旧群群号*新群群号”来转移群授权时长\n如果新群已经授权，则会增加对应时长。')
+    old_gid = int(m.group(1))
+    new_gid = int(m.group(2))
+    util.transfer_group(old_gid, new_gid)
+    await session.send(f"授权转移成功~\n旧群【{old_gid}】授权已清空\n新群【{new_gid}】授权到期时间：{util.check_group(new_gid)}")
 
 
 @on_command('授权状态', only_to_me=False)
 async def auth_status_chat(session):
     if session.event.user_id not in hoshino.config.SUPERUSERS:
+        await session.finish('只有主人才能查看授权状态哦')
         return
     for sid in hoshino.get_self_ids():
         sgl = set(g['group_id']
@@ -252,7 +241,7 @@ async def auth_status_chat(session):
     gp_num = len(sgl)
     fr_num = len(frl)
     key_num = len(util.get_key_list())
-    agp_num = len(util.get_authed_group_list())
+    agp_num = len(await util.get_authed_group_list())
     msg = f'Bot账号：{sid}\n所在群数：{gp_num}\n好友数：{fr_num}\n授权群数：{agp_num}\n未使用卡密数：{key_num}'
     await session.send(msg)
 
@@ -264,6 +253,7 @@ async def remove_auth_chat(session):
     不需要二次确认, 我寻思着你rm /* -rf的时候也没人让你二次确认啊  \n
     '''
     if session.event.user_id not in hoshino.config.SUPERUSERS:
+        await session.finish('只有主人才能清除授权哦')
         return
     if not session.current_arg.strip():
         await session.finish('请输入正确的群号, 例如“清除授权 123456789”')
@@ -289,6 +279,7 @@ async def group_leave_chat(session):
     退群, 并不影响授权, 清除授权请试用清除授权命令
     '''
     if session.event.user_id not in hoshino.config.SUPERUSERS:
+        await session.finish('只有主人才能让我退群哦')
         return
     try:
         gid = int(session.current_arg.strip())
@@ -318,19 +309,20 @@ async def view_aut_list(session):
         else:
             await session.finish(f'该卡密无效!')
 
-@on_command('变更所有授权', only_to_me=False)
+@on_command('变更所有授权',aliases=('批量变更','批量授权'), only_to_me=False)
 async def add_time_all_chat(session):
     '''
     为所有已有授权的群增加授权x天, 可用于维护补偿时间等场景
     '''
     if session.event.user_id not in hoshino.config.SUPERUSERS:
+        await session.finish('只有主人才能批量授权哦')
         return
     if not session.current_arg:
-        await session.finish('请发送需要为所有群增加或减少的时常, 例如“变更所有授权 7”')
+        await session.finish('请发送需要为所有群增加或减少的长, 例如“变更所有授权 7”')
     
     days = int(session.current_arg.strip())
 
-    authed_group_list = util.get_authed_group_list()
+    authed_group_list = await util.get_authed_group_list()
     for ginfo in authed_group_list:
         util.change_authed_time(ginfo['gid'], days)
     

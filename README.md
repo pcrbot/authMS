@@ -1,6 +1,6 @@
 # authMS
 
-适用于HoshinoBot v2的授权插件, 大部分功能以天枢授权为蓝本而开发。本插件另有带有web服务的页面, 如果需要请在目录下新建vue目录,并下载相关链接中已编译好的文件放入(可能由于版本问题会有不兼容). 本项目主体框架由[wdvxdr1123](https://github.com/wdvxdr1123)构建, 火龙|PurinBot添加了一些重要功能. 
+适用于HoshinoBot v2的授权插件, 大部分功能以天枢授权为蓝本而开发。本插件另有带有web服务的页面, 如果需要请在目录下新建vue目录,并下载相关链接中已编译好的文件放入(可能由于版本问题会有不兼容). 本项目主体框架由[wdvxdr1123](https://github.com/wdvxdr1123)构建, [火龙](https://github.com/xhl6666)添加了一些重要功能. 
 
 相关链接: 
 本项目地址: https://github.com/pcrbot/authMS
@@ -62,9 +62,19 @@ HoshinoBot项目地址: https://github.com/Ice-Cirno/HoshinoBot
 ## 鸣谢
 [GitHub@wdvxdr1123](https://github.com/wdvxdr1123)
 
-火龙 | PurinBot
+[GitHub@xhl6699](https://github.com/xhl6666)
 
 ## 更新日志
+
+### v0.1.2
+更新时间:2020/8/18
+
+> 本次更新合并了[HoshinoAuthorizeSystem](https://github.com/wdvxdr1123/HoshinoAuthorizeSystem)的功能
+
+* 新增退群，广播功能
+* 现在获取已授权群的时时候,会返回群名了
+* 使用指令所需权限不足时均增加了提示
+* 精简了转移授权部分的代码
 
 ### v0.1.1
 更新时间:2020/8/18
