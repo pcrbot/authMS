@@ -70,6 +70,13 @@ async def get_group():
         return 'failed'
     return jsonify(await util.get_authed_group_list())
 
+@auth.route('/api/add/group', methods=['POST'])
+@auth.route('/api/update/group', methods=['POST'])
+async def update_group():
+    gid = int(request.args.get('gid'))
+    time_change = int(request.args.get('duration'))
+    util.change_authed_time(gid, time_change)
+    return 'success'
 
 @auth.route('/api/activate', methods=['POST'])
 async def activate_group():
