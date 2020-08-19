@@ -2,7 +2,8 @@ import random
 import string
 from datetime import *
 import nonebot
-from hoshino import msghandler, priv
+from nonebot import CQHttpError
+from hoshino import msghandler, Service, priv, get_bot
 import hoshino
 key_dict = msghandler.key_dict
 group_dict = msghandler.group_dict
@@ -111,14 +112,18 @@ def change_authed_time(gid, time_change=0, operate=''):
         group_dict[gid] = today + timedelta(days=time_change)
     return group_dict[gid]
 
-def get_authed_group_list():
+async def get_authed_group_list():
     '''
     获取已授权的群
     '''
     group_list = []
     for key, value in group_dict.iteritems():
-        deadline = f'{value.year}-{value.month}-{value.day}'
-        group_list.append({'gid': key, 'deadline': deadline})
+        deadline = f'{value.year}年{value.month}月{value.day}日 {value.hour}时{value.minute}分'
+        try:
+            group_info = await get_bot().get_group_info(group_id=key, no_cache=True)
+        except CQHttpError:
+            group_info = {'group_name': '未知'}
+        group_list.append({'gid': key, 'deadline': deadline, 'groupName': group_info['group_name']})
     return group_list
 
 async def get_group_list_all():
@@ -179,3 +184,33 @@ def new_group_check(gid):
     # 添加试用天数
     change_authed_time(gid=gid,time_change=config.NEW_GROUP_DAYS)
     return 'trial'
+
+def transfer_group(old_gid, new_gid):
+    '''
+    转移授权,新群如果已经有时长了则在现有时长上增加
+    '''
+    today = datetime.now()
+    left_time = group_dict[old_gid] - today if old_gid in group_dict else timedelta(days=0)
+    group_dict[new_gid] = left_time + (group_dict[new_gid] if new_gid in group_dict else today)
+    group_dict.pop(old_gid)
+
+async def gun_group(gid):
+    '''
+    退出群聊
+    '''
+    try:
+        await get_bot().set_group_leave(group_id=gid)
+    except CQHttpError:
+        return False
+    return True
+
+
+async def notify_group(gid, txt):
+    '''
+    发送自定义提醒广播,顺带解决了HoshinoBot和Yobot的广播短板
+    '''
+    try:
+        await get_bot().send_group_msg(group_id=gid, message=txt)
+    except CQHttpError:
+        return False
+    return True
