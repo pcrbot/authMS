@@ -124,7 +124,8 @@ async def group_list_chat(session):
         msg_new = await util.process_group_msg(gid,
                                                g_time,
                                                title=f'第{i}条信息\n',
-                                               end='\n\n')
+                                               end='\n\n',
+                                               group_name_sp=item['groupName'])
         msg += msg_new
         
     msg += f'第{page}页, 共{pages_all}页\n发送查询授权+页码以查询其他页'
@@ -291,10 +292,8 @@ async def group_leave_chat(session):
         hoshino.logger.error(f'退出群聊{gid}时失败, 发生错误{type(e)}')
 
 
-@on_command('检验卡密',only_to_me=False)
-async def view_aut_list(session):
-    if session.event.detail_type == 'private' and not config.ALLOW_PRIVETE_CHECK:
-        await session.finish('管理员已禁止私聊检查卡密, 请在群内使用')
+@on_command('检验卡密',aliases=('检查卡密'), only_to_me=False)
+async def check_card_chat(session):
     if not session.current_arg:
         await session.finish('检验卡密请发送“检验卡密 卡密”哦~')
     else:

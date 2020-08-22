@@ -1,6 +1,13 @@
 # authMS
 
-适用于HoshinoBot v2的授权插件, 大部分功能以天枢授权为蓝本而开发。本插件另有带有web服务的页面, 如果需要请在目录下新建vue目录,并下载相关链接中已编译好的文件放入(可能由于版本问题会有不兼容). 本项目主体框架由[wdvxdr1123](https://github.com/wdvxdr1123)构建, [火龙](https://github.com/xhl6666)添加了一些重要功能. 
+适用于HoshinoBot v2的授权插件, 可对HoshinoBot的服务层以及对yobot进行授权控制. 大部分功能以天枢授权为蓝本而开发. 本插件另有带有web服务的页面, 如果需要请在目录下新建vue目录,并下载相关链接中已编译好的文件放入目录下`vue`目录内(可能由于会有不兼容). 本项目主体框架由[wdvxdr1123](https://github.com/wdvxdr1123)构建, [火龙](https://github.com/xhl6666)添加了一些重要功能. 
+
+
+本授权系统的开发调试过程均以[go-cqhttp](https://github.com/Mrs4s/go-cqhttp)进行, [cqhttp-mirai](https://github.com/yyuueexxiinngg/cqhttp-mirai)对于自身被拉入群以及加好友事件暂时无法接受到对应的通知. 
+
+**推荐使用[go-cqhttp](https://github.com/Mrs4s/go-cqhttp)v0.9.19以获得最佳体验**, 并且推荐使用v0.9.19版本而非最新版本(新版出现较为严重的卡顿问题), 使用v0.9.19会出现群聊@时显示的是QQ号而非昵称的问题, 此为已知问题. 
+
+
 
 相关链接: 
 本项目地址: https://github.com/pcrbot/authMS
@@ -11,10 +18,14 @@ HoshinoBot项目地址: https://github.com/Ice-Cirno/HoshinoBot
 
 ## 特点
 * **无GUI** ,不依赖Native环境, 依托于nonebot架构, 对不同的操作系统友好
-* 支持新群试用
-* 支持自定义到期后是否自动退群
-* 支持无卡密操作, 直接对一个群的授权进行修改/清零, 同时执行自动退群(可选)
+* 自定义新群试用
+* 自定义到期后是否自动退群
 * 支持自定义入群发言, 退群发言
+* 自定义每日检查频率(最低为每日一次)
+* 支持无卡密操作, 直接对一个群的授权进行修改/清零
+* 支持批量操作(网页/私聊)
+* 支持手动提醒群续费(网页)
+
 * 授权检查范围广, 支持以下情形:
   * 被拉近50人以下的群(因为默认不需要被邀请者同意)
   * 超过50人群, 需要机器人同意的群
@@ -57,14 +68,29 @@ HoshinoBot项目地址: https://github.com/Ice-Cirno/HoshinoBot
 
 
 ## 其他
-* 支持本机多个机器人数据互通, 详情参考`authMS.py.exaplme`中的注释, 由于SQLite是一个本地化的数据库,似乎不支持网络, 此部分均未测试, 出现问题请提交issue, 
-* 其他问题可以在群内@我或[tg联系](https://t.me/Sun_Xiao_Chuan)我, 回复可能不及时
+* 支持本机多个机器人数据互通, 详情参考`authMS.py.exaplme`中的注释, SQLite是一个本地化的数据库, 因此不支持网络, 配置目录请注意使用斜杠`/`.
+  
+* 如果您使用Hoshino与yobot的缝合体, `nonebot_plugin.py.example`替换yobot的`nonebot_plugin.py`, 位置:`yobot/yobot/src/client/nonebot_plugin.py`, 注意重命名
+
+* 如果您是初次使用authMS, 且希望配置为到期自动退群, 建议保持默认`ENABLE_AUTH`为0, 待完成全部现有群授权后, 再修改
 ## 鸣谢
 [GitHub@wdvxdr1123](https://github.com/wdvxdr1123)
 
 [GitHub@xhl6699](https://github.com/xhl6666)
 
 ## 更新日志
+
+
+### v0.1.3
+更新时间:2020/8/22 
+* 添加`nonebot_plugin.py.example`, 可以实现对yobot的授权控制(虽然早就有了)
+* 新增以下特性:
+  * `ENABLE_AUTH`, 授权系统自动检查/退群总开关
+  * `FREQUENCY`, 控制授权系统自动检查的频率
+  * `GROUPS_IN_PAGE`, 控制每页显示的群的条数
+  * `CARDS_IN_PAGE`, 控制每页显示的卡密条数
+* 移除配置项目:`ALLOW_PRIVETE_CHECK`
+* 优化获取全部授权列表时的参数, 大幅降低API调用次数(尤其是在群较多时)
 
 ### v0.1.2
 更新时间:2020/8/18
@@ -79,7 +105,7 @@ HoshinoBot项目地址: https://github.com/Ice-Cirno/HoshinoBot
 ### v0.1.1
 更新时间:2020/8/18
 * 修正Bug#1, 在设置新群使用天数为0时, 自动退群设置不起作用而直接退群
-* 新增指令, 为所有已有授权的群修改时间,
+* 新增指令, 为所有已有授权的群修改时间
 
 ### v0.1.0
 更新时间:2020/8/15
