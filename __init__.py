@@ -62,10 +62,10 @@ async def key_list_chat(session):
         page = 1  
     else:
         page = int(session.current_arg.strip())
-
+    cards_in_page = config.CARDS_IN_PAGE
     key_list = util.get_key_list()
     length = len(key_list)
-    pages_all = ceil(length/10)
+    pages_all = ceil(length/cards_in_page)
 
     if page > pages_all:
         await session.finish(f'没有那么多页, 当前共有卡密共{length}条, 共{pages_all}页')
@@ -79,7 +79,7 @@ async def key_list_chat(session):
     i = 0
     for items in key_list:
         i = i + 1
-        if i < (page-1)*10+1 or i > (page-1)*10+10:
+        if i < (page-1)*cards_in_page+1 or i > page*cards_in_page:
             continue
         msg += '卡密:' + items['key'] + '\n时长:' + str(items['duration']) + '天\n'
     msg += f'第{page}页, 共{pages_all}页\n发送卡密列表+页码以查询其他页'
@@ -109,7 +109,9 @@ async def group_list_chat(session):
 
     authed_group_list = await util.get_authed_group_list()
     length = len(authed_group_list)
-    pages_all = ceil(length/5) # 向上取整
+
+    groups_in_page = config.GROUPS_IN_PAGE
+    pages_all = ceil(length/groups_in_page) # 向上取整
     if page > pages_all:
         await session.finish(f'没有那么多页, 当前共有授权信息{length}条, 共{pages_all}页')
     if page <= 0:
@@ -117,7 +119,7 @@ async def group_list_chat(session):
     i = 0
     for item in authed_group_list:
         i = i + 1
-        if i < (page-1)*5+1 or i > (page-1)*5+5:
+        if i < (page-1)*groups_in_page+1 or i > page*groups_in_page:
             continue
         gid = int(item['gid'])
         g_time = util.check_group(gid)
