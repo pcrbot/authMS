@@ -1,10 +1,6 @@
-import random
-import string
+from datetime import timedelta
+from . import *
 from datetime import *
-import nonebot
-from nonebot import CQHttpError
-from hoshino import msghandler, Service, priv, get_bot
-import hoshino
 key_dict = msghandler.key_dict
 group_dict = msghandler.group_dict
 trial_list = msghandler.trial_list
@@ -226,7 +222,7 @@ async def gun_group(gid):
     退出群聊
     '''
     try:
-        await get_bot().set_group_leave(group_id=gid)
+        await nonebot.get_bot().set_group_leave(group_id=gid)
     except CQHttpError:
         return False
     return True
@@ -237,7 +233,7 @@ async def notify_group(gid, txt):
     发送自定义提醒广播,顺带解决了HoshinoBot和Yobot的广播短板
     '''
     try:
-        await get_bot().send_group_msg(group_id=gid, message=txt)
+        await nonebot.get_bot().send_group_msg(group_id=gid, message=txt)
     except CQHttpError:
         return False
     return True

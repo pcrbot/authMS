@@ -5,16 +5,22 @@ from . import util
 
 import nonebot
 from quart import request, Blueprint, jsonify, render_template
-
+import hoshino
 from hoshino import Service, priv
 
-sv = Service('homework', manage_priv=priv.SUPERUSER, enable_on_default=True, visible=False)
+
 auth = Blueprint('auth', __name__, url_prefix='/auth', template_folder="./vue", static_folder='./vue',
                  static_url_path='')
 bot = nonebot.get_bot()
 app = bot.server_app
 
-manage_password = 'Password123456!'  # 管理密码请修改
+try:
+    config = hoshino.config.authMS.auth_config
+except:
+    # 保不准哪个憨憨又不读README呢
+    hoshino.logger.error('authMS无配置文件!请仔细阅读README')
+    
+manage_password = config.PASSWORD  # 管理密码请在authMS.py中修改
 
 
 @auth.route('/')
