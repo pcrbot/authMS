@@ -64,7 +64,7 @@ HoshinoBot项目地址: https://github.com/Ice-Cirno/HoshinoBot
    ```
    pip install -r requirements.txt
    ```
-3. 以`msghandler.py.example`替换`msghandle.py`文件, 请注意重命名. 
+3. 以`msghandler.py.example`替换`msghandler.py`文件, 请注意重命名. 
 4. 在HoshinoBot统一配置目录下保存配置信息,命名为`authMS.py`, 已提供配置样板`authMS.py.exaplme`, 按照注释修改为您需要的配置
 
 
