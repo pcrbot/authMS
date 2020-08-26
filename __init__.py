@@ -45,4 +45,4 @@ async def master_help_chat(session):
     if session.event.user_id not in hoshino.config.SUPERUSERS:
         await session.finish('只有主人才能查看此页帮助')
 
-    await session.finish(config.ADMIN_HELP_MSG)
+    await session.finish(config.ADMIN_HELP)
