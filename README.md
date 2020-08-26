@@ -3,10 +3,7 @@
 适用于HoshinoBot v2的授权插件, 可对HoshinoBot的服务层以及对yobot进行授权控制. 大部分功能以天枢授权为蓝本而开发. 本插件另有带有web服务的页面, 如果需要请在目录下新建vue目录,并下载相关链接中已编译好的文件放入目录下`vue`目录内(可能由于会有不兼容). 本项目主体框架由[wdvxdr1123](https://github.com/wdvxdr1123)构建, [火龙](https://github.com/xhl6666)添加了一些重要功能. 
 
 
-本授权系统的开发调试过程均以[go-cqhttp](https://github.com/Mrs4s/go-cqhttp)进行, [cqhttp-mirai](https://github.com/yyuueexxiinngg/cqhttp-mirai)对于自身被拉入群以及加好友事件暂时无法接受到对应的通知. 
-
-**推荐使用[go-cqhttp](https://github.com/Mrs4s/go-cqhttp)v0.9.19以获得最佳体验**, 并且推荐使用v0.9.19版本而非最新版本(新版出现较为严重的卡顿问题), 使用v0.9.19会出现群聊@时显示的是QQ号而非昵称的问题, 此为已知问题. 
-
+本授权系统的开发调试过程均以[go-cqhttp](https://github.com/Mrs4s/go-cqhttp)进行, [cqhttp-mirai](https://github.com/yyuueexxiinngg/cqhttp-mirai)目前也已可以正常上报, 请使用0.2.2.5及以后版本, 西城佬牛逼(大声).
 
 
 相关链接: 
