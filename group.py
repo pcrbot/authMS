@@ -81,14 +81,18 @@ async def group_leave_chat(session):
     if session.event.user_id not in hoshino.config.SUPERUSERS:
         await session.finish('只有主人才能让我退群哦')
         return
+    gid = int(session.current_arg.strip())
+    await session.send('正在褪裙...')
     try:
-        gid = int(session.current_arg.strip())
-        await session.send('正在褪裙...')
         await session.bot.send_group_msg(group_id=gid,message=config.GROUP_LEAVE_MSG)
+    except Exception as e:
+        await session.send(f'发送退群发言时发生错误{type(e)}, 可能被禁言')
+    try:
         await session.bot.set_group_leave(group_id=gid)
         await session.send(f'已成功退出群{gid}')
     except Exception as e:
         await session.send(f'退群失败, 发生错误{type(e)}')
+
 
 @on_command('快速检查',only_to_me=True)
 async def quick_check_chat(session):
