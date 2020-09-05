@@ -8,7 +8,6 @@ from quart import request, Blueprint, jsonify, render_template
 import hoshino
 from hoshino import Service, priv
 
-
 auth = Blueprint('auth', __name__, url_prefix='/auth', template_folder="./vue", static_folder='./vue',
                  static_url_path='')
 bot = nonebot.get_bot()
@@ -19,7 +18,7 @@ try:
 except:
     # 保不准哪个憨憨又不读README呢
     hoshino.logger.error('authMS无配置文件!请仔细阅读README')
-    
+
 manage_password = config.PASSWORD  # 管理密码请在authMS.py中修改
 
 
@@ -46,6 +45,9 @@ async def get_key():
 
 @auth.route('/api/add/key', methods=['POST'])
 async def add_key():
+    password = request.args.get('password')
+    if password != manage_password:
+        return 'failed'
     if request.method == 'POST':
         duration = int(request.args.get('duration'))
         num = int(request.args.get('num'))
@@ -57,6 +59,9 @@ async def add_key():
 
 @auth.route('/api/del/key', methods=['DELETE'])
 async def del_key():
+    password = request.args.get('password')
+    if password != manage_password:
+        return 'failed'
     if request.method == 'DELETE':
         key = request.args.get('key')
         return jsonify(util.del_key(key))
@@ -64,6 +69,9 @@ async def del_key():
 
 @auth.route('/api/update/key', methods=['POST'])
 async def update_key():
+    password = request.args.get('password')
+    if password != manage_password:
+        return 'failed'
     key = request.args.get('key')
     duration = int(request.args.get('duration'))
     return jsonify(util.update_key(key, duration))
@@ -76,13 +84,18 @@ async def get_group():
         return 'failed'
     return jsonify(await util.get_authed_group_list())
 
+
 @auth.route('/api/add/group', methods=['POST'])
 @auth.route('/api/update/group', methods=['POST'])
 async def update_group():
+    password = request.args.get('password')
+    if password != manage_password:
+        return 'failed'
     gid = int(request.args.get('gid'))
     time_change = int(request.args.get('duration'))
     util.change_authed_time(gid, time_change)
     return 'success'
+
 
 @auth.route('/api/activate', methods=['POST'])
 async def activate_group():
@@ -92,8 +105,12 @@ async def activate_group():
         return 'success'
     return 'failed'
 
+
 @auth.route('/api/notify/group', methods=['POST'])
 async def notify_group():
+    password = request.args.get('password')
+    if password != manage_password:
+        return 'failed'
     gid = int(request.args.get('gid'))
     msg = request.args.get('msg')
     if await util.notify_group(gid, msg):
@@ -103,6 +120,9 @@ async def notify_group():
 
 @auth.route('/api/gun/group', methods=['POST'])
 async def gun_group():
+    password = request.args.get('password')
+    if password != manage_password:
+        return 'failed'
     gid = int(request.args.get('gid'))
     if await util.gun_group(gid):
         return 'success'
