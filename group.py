@@ -32,12 +32,12 @@ async def approve_group_invite(session):
                                                     sub_type=ev.sub_type,
                                                     approve=False,
                                                     reason='此群授权已到期, 续费请联系维护组')
-        hoshino.logger.info(f'接受到加群邀请,群号{gid}授权状态{new_group_auth}, 拒绝加入')
+        util.log(f'接受到加群邀请,群号{gid}授权状态{new_group_auth}, 拒绝加入','group_add')
     elif new_group_auth == 'authed' or new_group_auth == 'trial':
         await session.bot.set_group_add_request(flag=ev.flag,
                                                 sub_type=ev.sub_type,
                                                 approve=True)
-        hoshino.logger.info(f'接受到加群邀请,群号{gid}授权状态{new_group_auth}, 同意加入')
+        util.log(f'接受到加群邀请,群号{gid}授权状态{new_group_auth}, 同意加入','group_add')
     else:
         pass
 
@@ -60,6 +60,7 @@ async def approve_group_invite_auto(session):
     if new_group_auth == 'expired' or new_group_auth == 'no trial':
         if config.AUTO_LEAVE:
             await session.bot.set_group_leave(group_id=gid)
+            util.log(f'被强制拉入群{gid}中,该群授权状态{new_group_auth}, 已自动退出','group_leave')
             hoshino.logger.info(f'被强制拉入群{gid}中,该群授权状态{new_group_auth}, 已自动退出')
     elif new_group_auth == 'authed' or new_group_auth == 'trial':
         await asyncio.sleep(1) # 别发太快了
@@ -70,10 +71,10 @@ async def approve_group_invite_auto(session):
         except Exception as e:
             hoshino.logger.error(f'向新群{gid}发送消息失败, 发生错误{type(e)}')
             pass
+    util.log(f'被强制拉入群{gid}中,该群授权状态{new_group_auth}','group_add')
     hoshino.logger.info(f'被强制拉入群{gid}中,该群授权状态{new_group_auth}')
 
 
-@on_command('退群', only_to_me=False)
 async def group_leave_chat(session):
     '''
     退群, 并不影响授权, 清除授权请试用清除授权命令
@@ -90,9 +91,9 @@ async def group_leave_chat(session):
     try:
         await session.bot.set_group_leave(group_id=gid)
         await session.send(f'已成功退出群{gid}')
+        util.log(f'已成功退出群{gid}','group_leave')
     except Exception as e:
         await session.send(f'退群失败, 发生错误{type(e)}')
-
 
 @on_command('快速检查',only_to_me=True)
 async def quick_check_chat(session):
@@ -113,7 +114,7 @@ async def check_auth():
     for group in group_info_all:
         gid = group['group_id']
         if gid in group_dict:
-            hoshino.logger.info(f'正在检查群{gid}的授权......')
+            util.log(f'正在检查群{gid}的授权......')
             # 此群已有授权或曾有授权, 检查是否过期
             time_left = group_dict[gid] - datetime.now()
             days_left = time_left.days
@@ -131,15 +132,15 @@ async def check_auth():
                     await bot.send_group_msg(group_id=gid,
                                                      message=msg_expired)
                 except Exception as e:
-                    hoshino.logger.error(f'向群{gid}发送过期提醒时发生错误{type(e)}')
+                    util.log(f'向群{gid}发送过期提醒时发生错误{type(e)}')
 
                 if config.AUTO_LEAVE:
                     try:
                         # 使用try以防止机器人被迅速踢出而导致群不存在等情况
                         await bot.set_group_leave(group_id=gid)
                     except Exception as e:
-                        hoshino.logger.error(f'群{gid}授权过期,但退群时发生错误{type(e)}')
-                    hoshino.logger.info(f'群{gid}授权过期,已自动退群')
+                        util.log(f'群{gid}授权过期,但退群时发生错误{type(e)}')
+                    util.log(f'群{gid}授权过期,已自动退群')
                 group_dict.pop(gid)
 
             if days_left < config.REMIND_BRFORE_EXPIRED and days_left >= 0:
@@ -155,7 +156,7 @@ async def check_auth():
                                                      message=msg_remind)
                 except Exception as e:
                     hoshino.logger.error(f'向群{gid}发生到期提醒消息时发生错误{type(e)}')
-            hoshino.logger.info(f'群{gid}的授权不足{days_left+1}天')
+            util.log(f'群{gid}的授权不足{days_left+1}天')
         
         elif gid not in trial_list:
             # 正常情况下, 无论是50人以上群还是50人以下群, 都需要经过机器人同意或检查
@@ -164,9 +165,18 @@ async def check_auth():
             if not config.NEW_GROUP_DAYS and config.AUTO_LEAVE:
                 # 无新群试用机制,直接退群
                 await bot.send_group_msg(group_id=gid,message=config.GROUP_LEAVE_MSG)
-                hoshino.logger.info(f'发现无记录而被自动拉入的新群{gid}, 已退出此群')
+                util.log(f'发现无记录而被自动拉入的新群{gid}, 已退出此群','group_leave')
                 await bot.set_group_leave(group_id=gid)
                 continue
             else:
                 util.new_group_check(gid)
-                hoshino.logger.info(f'发现无记录而被自动拉入的新群{gid}, 已开始试用')
+                util.log(f'发现无记录而被自动拉入的新群{gid}, 已开始试用','group_add')
+
+@on_notice('group_decrease.kick_me')
+async def kick_me_alert(session: NoticeSession):
+    '''
+    被踢出同样记录, 请配置
+    '''
+    group_id = session.event.group_id
+    operator_id = session.event.operator_id
+    util.log(f'被{operator_id}提出群{group_id}','group_kick')

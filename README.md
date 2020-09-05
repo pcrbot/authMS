@@ -3,7 +3,9 @@
 适用于HoshinoBot v2的授权插件, 可对HoshinoBot的服务层以及对yobot进行授权控制. 大部分功能以天枢授权为蓝本而开发. 本插件另有带有web服务的页面, 如果需要请在此插件的目录下新建vue目录,并下载相关链接中已编译好的文件放入目录下`vue`目录内(可能会有不兼容). 本项目主体框架由[wdvxdr1123](https://github.com/wdvxdr1123)构建, [火龙](https://github.com/xhl6666)添加了一些重要功能. 
 
 
-本授权系统的开发调试过程均以[go-cqhttp](https://github.com/Mrs4s/go-cqhttp)进行, [cqhttp-mirai](https://github.com/yyuueexxiinngg/cqhttp-mirai)目前也已可以正常上报, 请使用0.2.2.5及以后版本, 西城佬牛逼(大声).
+本授权系统的开发调试过程均以[go-cqhttp](https://github.com/Mrs4s/go-cqhttp)进行, [cqhttp-mirai](https://github.com/yyuueexxiinngg/cqhttp-mirai)经测试也可正常使用, 请使用0.2.2.5及以后版本.
+
+本项目使用GPL-3.0协议, 您使用本插件所造成的一切财产损失或其他形式损失, 均与开发者无关, 开发者不承担任何相关责任. 
 
 
 相关链接: 
@@ -38,6 +40,7 @@ HoshinoBot项目地址: https://github.com/Ice-Cirno/HoshinoBot
 * 【卡密列表】查看已有卡密的信息,后跟数字来查看对应页数
 * 【授权列表】查看所有授权群的信息,后跟数字来查看对应页数
 * 【管理员帮助】查看管理员指令
+* 【快速检查】立刻检查群的授权, 检查方式与定时任务一样
 
 ### 仅限超级管理员的指令
 * 【变更授权 123456789+5】为群123456789增加5天授权, 也可以是减
@@ -46,7 +49,6 @@ HoshinoBot项目地址: https://github.com/Ice-Cirno/HoshinoBot
 * 【清除授权 987654】清除群987654的全部授权, 并自动退群(如果配置了的话)
 * 【退群 987654】命令退出群聊987654, 但并不清除剩余授权时间
 * 【变更所有授权 3】为所有已有授权的群增加3天授权时间
-* 【快速检查】立刻检查群的授权, 检查方式与定时任务一样
 
 ### 通用指令
 * 【检验卡密 abcdefghijklemop】检查卡密的有效性
@@ -65,19 +67,22 @@ HoshinoBot项目地址: https://github.com/Ice-Cirno/HoshinoBot
    pip install -r requirements.txt
    ```
 3. 以`msghandler.py.example`替换`msghandler.py`文件, 请注意重命名. 
-4. 在HoshinoBot统一配置目录下保存配置信息,命名为`authMS.py`, 已提供配置样板`authMS.py.exaplme`, 按照注释修改为您需要的配置
+4. 在HoshinoBot统一配置目录下保存配置信息,命名为`authMS.py`, 已提供配置样板`authMS.py.example`, 按照注释修改为您需要的配置
 
 
 ## 其他
-* 支持本机多个机器人数据互通, 详情参考`authMS.py.exaplme`中的注释, SQLite是一个本地化的数据库, 因此不支持网络, 配置目录请注意使用斜杠`/`.
+* 日志功能并非Hoshino内置的日志记录, 而是作为单独文件记录. 默认保存位置`log/authMS.log`, 默认只记录卡密使用, 加群退群被踢. 
+* 支持本机多个机器人数据互通, 详情参考`authMS.py.example`中的注释, SQLite是一个本地化的数据库, 因此不支持网络, 配置目录请注意使用斜杠`/`.
   
 * 如果您使用Hoshino与yobot的缝合体, `nonebot_plugin.py.example`替换yobot的`nonebot_plugin.py`, 位置:`yobot/yobot/src/client/nonebot_plugin.py`, 注意重命名
 
 * 如果您是初次使用authMS, 且希望配置为到期自动退群, 建议保持默认`ENABLE_AUTH`为0, 待完成全部现有群授权后, 再修改
-## 鸣谢
+## 贡献
 [GitHub@wdvxdr1123](https://github.com/wdvxdr1123)
 
 [GitHub@xhl6699](https://github.com/xhl6666)
+
+[GitHub@var](https://github.com//var-mixer)
 
 ## 更新日志
 

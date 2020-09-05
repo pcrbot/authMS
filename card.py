@@ -5,6 +5,7 @@ from . import *
 async def creat_key_chat(session):
     if session.event.user_id not in hoshino.config.SUPERUSERS:
         # 非超管, 忽略
+        util.log(f'{session.event.user_id}尝试生成卡密，已拒绝')
         await session.finish('只有主人才能生成卡密哦')
         return
     if session.event.detail_type == 'group':
@@ -31,6 +32,7 @@ async def creat_key_chat(session):
 @on_command('卡密列表', only_to_me=True)
 async def key_list_chat(session):
     if session.event.user_id not in hoshino.config.SUPERUSERS:
+        util.log(f'{session.event.user_id}尝试查看卡密列表，已拒绝')
         await session.finish('只有主人才能查看卡密列表哦')
         return
     if session.event.detail_type == 'group':
@@ -94,13 +96,14 @@ async def reg_group_chat(session):
     else:
         # 讨论组搁这儿充值你🐎呢
         return
-
+    days = util.query_key(key)
     result = util.reg_group(gid, key)
-
     if result == False:
         # 充值失败
         msg = '卡密无效, 请检查是否有误或已被使用, 如果无此类问题请联系发卡方'
     else:
+        
+        util.log(f'{session.event.user_id}使用卡密{key}为群{gid}成功充值{days}天','card_use')
         msg = await util.process_group_msg(gid, result, '充值成功\n')
     await session.finish(msg)
 
@@ -117,8 +120,10 @@ async def check_card_chat(session):
             await session.finish('格式输错了啦憨批！请按照“检验卡密 卡密”进行输入！')
         key = m.group(1)
         if duration := util.query_key(key):
+            util.log(f'{session.event.user_id}检查卡密{key},有效期{duration}天')
             await session.finish(f'该卡密有效!\n授权时长:{duration}天')
         else:
+            util.log(f'{session.event.user_id}检查卡密{key},无效')
             await session.finish(f'该卡密无效!')
 
 

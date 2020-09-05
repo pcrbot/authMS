@@ -1,6 +1,7 @@
 from datetime import timedelta
 from . import *
 from datetime import *
+import time
 key_dict = msghandler.key_dict
 group_dict = msghandler.group_dict
 trial_list = msghandler.trial_list
@@ -237,3 +238,33 @@ async def notify_group(gid, txt):
     except CQHttpError:
         return False
     return True
+
+def time_now():
+    return time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+
+
+LOG_LIST=[
+    'card_use',
+    'group_add',
+    'group_kick',
+    'group_leave',
+    'friend_add',
+]
+
+
+
+def log(info,log_type='debug'):
+    '''
+    记录日志, 保存位置为HoshinoBot/logs/authMS.log
+    '''
+    if not config.LOG:
+        return
+    if not config.DEBUG and log_type not in LOG_LIST:
+        # 非DEBUG模式, 非需要记录的信息
+        return
+
+    file_name = 'log/authMS.log'
+    with open(file_name,'a',encoding='utf-8') as l:
+        l.writelines(f"[{time_now()}]")
+        l.writelines(info)
+        l.writelines('\n')

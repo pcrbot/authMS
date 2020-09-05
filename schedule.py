@@ -6,6 +6,7 @@ tz =  pytz.timezone('Asia/Shanghai')
 
 sv = Service('authMS',
              manage_priv=priv.SUPERUSER,
+             help_=config.REG_HELP_GROUP,
              enable_on_default=True,
              visible=False)
 
