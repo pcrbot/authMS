@@ -74,7 +74,7 @@ async def approve_group_invite_auto(session):
     util.log(f'被强制拉入群{gid}中,该群授权状态{new_group_auth}','group_add')
     hoshino.logger.info(f'被强制拉入群{gid}中,该群授权状态{new_group_auth}')
 
-
+@on_command('退群',only_to_me=False)
 async def group_leave_chat(session):
     '''
     退群, 并不影响授权, 清除授权请试用清除授权命令
