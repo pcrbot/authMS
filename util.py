@@ -1,7 +1,7 @@
 from datetime import timedelta
 from . import *
 from datetime import *
-import time
+import time, os, json
 key_dict = msghandler.key_dict
 group_dict = msghandler.group_dict
 trial_list = msghandler.trial_list
@@ -109,39 +109,45 @@ def change_authed_time(gid, time_change=0, operate=''):
         group_dict[gid] = today + timedelta(days=time_change)
     return group_dict[gid]
 
-async def get_group_name(group_id=0):
+async def get_group_info(group_ids=0, info_type='group_name'):
     '''
-    1. 传入一个整型数字, 返回群名字符串
-    2. 传入一个list, 内含多个群ID, 返回一个字典, 键为群ID(int),值为群名 
-    3. 不填入参数, 返回一个包含所有群ID与群名对应关系的字典
+    1. 传入一个整型数字, 返回单个群指定信息, 格式为字典
+    2. 传入一个list, 内含多个群号(int), 返回一个字典, 键为群号, 值为指定信息
+    3. 不填入参数, 返回一个包含所有群号与指定信息的字典
+    无论获取多少群信息, 均只有一次API的开销, 传入未加入的群时, 将自动忽略
+    info_type支持group_id, group_name, max_member_count, member_count
     '''
-
-    group_list_all = await get_group_list_all()
+    group_info_all = await get_group_list_all()
     _gids=[]
     _gnames=[]
     # 获得的已加入群为列表形式, 处理为需要的字典形式
-    for it in group_list_all:
+    for it in group_info_all:
         _gids.append(it['group_id'])
-        _gnames.append(it['group_name'])
-    group_name_dir_all = dict(zip(_gids,_gnames))
+        _gnames.append(it[info_type])
+    group_info_dir = dict(zip(_gids,_gnames))
 
-    if group_id == 0:
-        return group_name_dir_all
-    if type(group_id) == list:
-        group_name_dir = {}
-        for gid in group_id:
-            group_name_dir[int(gid)] = group_name_dir_all.get(int(gid))
-        return group_name_dir
-    
-    
-    return group_name_dir
+    if group_ids == 0:
+        return group_info_dir
+    if type(group_ids) == int:
+        # 转为列表
+        group_ids = [group_ids]
+        print(group_ids)
+
+
+    for key in list(group_info_dir.keys()):
+        if key not in group_ids:
+            del group_info_dir[key]
+        else:
+            #TODO: group not joined
+            pass
+    return group_info_dir
 
 async def get_authed_group_list():
     '''
     获取已授权的群
     '''
     authed_group_list = []
-    group_name_dir = await get_group_name()
+    group_name_dir = await get_group_info()
 
 
     for key, value in group_dict.iteritems():
@@ -218,10 +224,18 @@ def transfer_group(old_gid, new_gid):
     group_dict[new_gid] = left_time + (group_dict[new_gid] if new_gid in group_dict else today)
     group_dict.pop(old_gid)
 
-async def gun_group(gid):
+async def gun_group(group_id, reason='管理员操作'):
     '''
-    退出群聊
+    退出群聊, 同时会发送消息, 说明退群原因
     '''
+    gid = group_id
+    msg = config.GROUP_LEAVE_MSG
+    msg += reason
+    try:
+        await nonebot.get_bot().send_group_msg(group_id=gid, message=msg)
+    except Exception as e:
+        hoshino.logger.error(f'向群{group_id}发送退群消息时发生错误{e}')
+    await asyncio.sleep(1)
     try:
         await nonebot.get_bot().set_group_leave(group_id=gid)
     except CQHttpError:
@@ -229,10 +243,11 @@ async def gun_group(gid):
     return True
 
 
-async def notify_group(gid, txt):
+async def notify_group(group_id, txt):
     '''
     发送自定义提醒广播,顺带解决了HoshinoBot和Yobot的广播短板
     '''
+    gid = group_id
     try:
         await nonebot.get_bot().send_group_msg(group_id=gid, message=txt)
     except CQHttpError:
@@ -268,3 +283,111 @@ def log(info,log_type='debug'):
         l.writelines(f"[{time_now()}]")
         l.writelines(info)
         l.writelines('\n')
+
+
+def allowlist(group_id,operator='none',nocheck='no_number_check'):
+    '''
+    operator------
+        none: 检查一个群或人是否在白名单中, 不在时返回值为not in
+        add: 增加白名单
+        del: 移除白名单
+        clear: 清除所有白名单
+    nocheck------
+        no_number_check: 不检查人数
+        no_auth_check: 不检查授权(永久有效)
+        no_check: 全部不检查
+    '''
+    
+    ALLOWLIST_PATH = os.path.expanduser('~/.hoshino/authMS/allowlist.json')
+    if os.path.exists(ALLOWLIST_PATH):
+        with open(ALLOWLIST_PATH,'r',encoding='utf-8') as rf:
+            try:
+                allowlist = json.load(rf)
+            except Exception as e:
+                # 您写的json格式有错误？扬了就好了
+                print(e)
+                allowlist = {}
+    else:
+        os.makedirs(os.path.expanduser('~/.hoshino/authMS'), exist_ok=True)
+        allowlist = {}
+
+    if operator == 'none':
+        return allowlist.get(str(group_id),'not in')
+    elif operator == 'add':
+        print(allowlist)
+        allowlist[str(group_id)] = nocheck
+        print(allowlist)
+        rt = 'ok'
+    elif operator == 'remove':
+        rt = allowlist.pop(str(group_id),'not in')
+        if rt != 'not in':
+            rt ='ok'
+    elif operator == 'clear':
+        allowlist.clear()
+        rt = 'ok'
+    else:
+        return 'nothing to do'
+
+    with open(ALLOWLIST_PATH,"w",encoding='utf-8') as sf:
+        json.dump(allowlist,sf,indent=4,ensure_ascii=False)
+
+    return rt
+
+# 这个没写完别看了-------------------------------------------
+async def set_block_list(group_id, operator_id, reason='no reason'):
+    '''
+    将一个群添加到黑名单, 目前仅本地拉黑, 未来可能支持......算了不画饼了
+    可以重复拉黑, 以更新reason
+
+    group_id: 要拉黑的群号
+    operator_id: 操作人
+    reason: 拉黑原因
+
+    以下信息将由api自动获取:
+    group_info: 直接传入bot.get_group_info()返回的原始信息
+    group_member_list: 直接传入bot.get_group_member_list()返回的群所有成员信息
+    operator_name: 操作者昵称
+    '''
+    
+    BLOCKLIST_PATH = os.path.expanduser('~/.hoshino/authMS/blocklist.json')
+
+    # 读名单
+    if os.path.exists(BLOCKLIST_PATH):
+        with open(BLOCKLIST_PATH,'r+',encoding='utf-8') as f:
+            blocklist = json.load(f)
+    else:
+        os.makedirs(os.path.expanduser('~/.hoshino/authMS'), exist_ok=True)
+        blocklist = {}
+
+    bot=nonebot.get_bot
+
+    # 在对应黑白名单中加入该群, 键值为群号
+    temp_dir ={
+        "time": int(time.time()),  # 记录为时间戳形式, 便于处理    
+        "operator_id": int(operator_id),
+        "operator_name":'name'
+    }
+    pass
+
+def get_list(list_type='allowlist'):
+    '''
+    list_type可选blocklist和allowlist
+    保存位置: ~./.hoshino/authMS/blocklist.json和allowlist.json
+    为保持兼容性, 会将所有键值转化为int
+    '''
+    LIST_PATH = os.path.expanduser(f'~/.hoshino/authMS/{list_type}.json')
+    if os.path.exists(LIST_PATH):
+        with open(LIST_PATH,'r',encoding='utf-8') as rf:
+            try:
+                ba_list = json.load(rf)
+            except Exception as e:
+                print(e)
+                ba_list = {}
+    else:
+        ba_list = {}
+
+    # 将键的str格式转换为int格式, 保持其他函数传参时的兼容性
+    ba_new = {}
+    for key in ba_list:
+        ba_new[int(key)] = ba_list[key]
+    return ba_new

@@ -25,7 +25,7 @@ async def add_time_all_chat(session):
 async def group_list_chat(session):
     '''
     此指令获得的是, 所有已经获得授权的群, 其中一些群可能Bot并没有加入 \n
-    当授权群过多时,每页只显示5条
+    分页显示, 请在authMS.py中配置
     '''
     if session.event.user_id not in hoshino.config.SUPERUSERS:
         util.log(f'{session.event.user_id}尝试查看授权列表, 已拒绝')
@@ -161,3 +161,111 @@ async def remove_auth_chat(session):
         except Exception as e:
             hoshino.logger.error(f'退出群{gid}时发生错误{type(e)}')
     await session.send(msg)
+
+
+@on_command('不检查人数', aliases=('设置人数白名单'), only_to_me=False)
+async def no_number_check_chat(session):
+    '''
+    不检查一个群的人数是否超过人数限制, 在群聊中发送则为不检查本群
+    '''
+    if session.event.detail_type == 'group':
+        gid = session.event.group_id
+    elif session.event.detail_type == 'private' :
+        if not session.current_arg.strip():
+            await session.finish('请输入正确的群号, 例如“不检查人数 123456789”')
+        gid = int(session.current_arg.strip())
+    
+    uid = session.event.user_id
+    if uid not in hoshino.config.SUPERUSERS:
+        util.log(f'{uid}尝试为群{gid}清除设置不检查人数, 已拒绝')
+        await session.finish('只有主人才能设置白名单')
+        return
+
+    util.allowlist(group_id=gid, operator='add',nocheck='no_number_check')
+    util.log(f'管理员{uid}已将群{gid}添加至白名单, 类型为不检查人数')
+    await session.finish(f'已将群{gid}添加至白名单, 类型为不检查人数')
+
+
+@on_command('不检查授权', aliases=('设置人数白名单'), only_to_me=False)
+async def no_auth_check_chat(session):
+    if session.event.detail_type == 'group':
+        gid = session.event.group_id
+    elif session.event.detail_type == 'private' :
+        if not session.current_arg.strip():
+            await session.finish('请输入正确的群号, 例如“不检查授权 123456789”')
+        gid = int(session.current_arg.strip())
+
+    uid = session.event.user_id
+    if uid not in hoshino.config.SUPERUSERS:
+        util.log(f'{uid}尝试为群{gid}清除设置不检查授权, 已拒绝')
+        await session.finish('只有主人才能设置白名单')
+        return
+    util.allowlist(group_id=gid, operator='add',nocheck='no_auth_check')
+    util.log(f'已将群{gid}添加至白名单, 类型为不检查授权')
+    await session.finish(f'已将群{gid}添加至白名单, 类型为不检查授权')
+
+
+@on_command('添加白名单', only_to_me=False)
+async def no_check_chat(session):
+    '''
+    最高级别白名单, 授权与人数都检查
+    '''
+    if session.event.detail_type == 'group':
+        gid = session.event.group_id
+    elif session.event.detail_type == 'private' :
+        if not session.current_arg.strip():
+            await session.finish('请输入正确的群号, 例如“添加白名单 123456789”')
+        gid = int(session.current_arg.strip())
+
+    uid = session.event.user_id
+    if uid not in hoshino.config.SUPERUSERS:
+        util.log(f'{uid}尝试为群{gid}清除设置添加白名单, 已拒绝')
+        await session.finish('只有主人才能设置白名单')
+        return
+    
+    util.allowlist(group_id=gid, operator='add',nocheck='no_check')
+    util.log(f'已将群{gid}添加至白名单, 类型为全部不检查')
+    await session.finish(f'已将群{gid}添加至白名单, 类型为全部不检查')
+
+
+@on_command('移除白名单', aliases=('删除白名单'))
+async def remove_allowlist_chat(session):
+    if not session.current_arg.strip():
+        await session.finish('请输入正确的群号, 例如“移除白名单 123456789”')
+    gid = int(session.current_arg.strip())
+    uid = session.event.user_id
+
+    if uid not in hoshino.config.SUPERUSERS:
+        util.log(f'{uid}尝试移除白名单{gid}, 已拒绝')
+        await session.finish('只有主人才能移除白名单')
+        return
+    
+    re_code = util.allowlist(group_id=gid, operator='remove')
+    if re_code == 'not in':
+        await session.finish(f'群{gid}不在白名单中')
+    await session.finish(f'已将群{gid}移出白名单')
+    util.log(f'已将群{gid}移出白名单')
+
+
+@on_command('全部白名单', aliases=('白名单列表','所有白名单'))
+async def get_allowlist_chat(session):
+    if session.event.user_id not in hoshino.config.SUPERUSERS:
+        util.log(f'{session.event.user_id}尝试查看白名单, 已拒绝')
+        await session.finish('只有主人才能查看白名单')
+        return
+
+    allow_list = util.get_list(list_type='allowlist')
+
+    msg = '白名单信息\n'
+    gids = list(allow_list.keys())
+    gname_dir = await util.get_group_info(group_ids=gids, info_type='group_name')
+    print(gname_dir)
+    # 考虑到一般没有那么多白名单, 因此此处不做分页
+    i = 1 
+    for gid in gname_dir:
+        msg += f'第{i}条:   群号{gid}\n'
+        gname = gname_dir[gid]
+        gnocheck = allow_list[gid]
+        msg += f'群名:{gname}, 类型:{gnocheck}\n\n'
+
+    session.finish(msg)
