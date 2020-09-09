@@ -2,6 +2,7 @@ from datetime import timedelta
 from . import *
 from datetime import *
 import time, os, json
+import asyncio
 key_dict = msghandler.key_dict
 group_dict = msghandler.group_dict
 trial_list = msghandler.trial_list

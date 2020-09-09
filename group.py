@@ -174,12 +174,12 @@ async def check_auth():
             if not config.NEW_GROUP_DAYS and config.AUTO_LEAVE:
                 # 无新群试用机制,直接退群
                 await bot.send_group_msg(group_id=gid,message=config.GROUP_LEAVE_MSG)
-                util.log(f'发现无记录而被自动拉入的新群{gid}, 已退出此群','group_leave')
+                util.log(f'发现无记录而被拉入的新群{gid}, 已退出此群','group_leave')
                 await bot.set_group_leave(group_id=gid)
                 continue
             else:
                 util.new_group_check(gid)
-                util.log(f'发现无记录而被自动拉入的新群{gid}, 已开始试用','group_add')
+                util.log(f'发现无记录而被拉入的新群{gid}, 已开始试用','group_add')
 
 @on_notice('group_decrease.kick_me')
 async def kick_me_alert(session: NoticeSession):
@@ -188,7 +188,7 @@ async def kick_me_alert(session: NoticeSession):
     '''
     group_id = session.event.group_id
     operator_id = session.event.operator_id
-    util.log(f'被{operator_id}提出群{group_id}','group_kick')
+    util.log(f'被{operator_id}踢出群{group_id}','group_kick')
 
 
 async def check_number(group_id=0):
