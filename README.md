@@ -24,7 +24,7 @@ HoshinoBot项目地址: https://github.com/Ice-Cirno/HoshinoBot
 * 支持无卡密操作, 直接对一个群的授权进行修改/清零
 * 支持批量操作(网页/私聊)
 * 支持手动提醒群续费(网页)
-* 可自动接收好友请求
+* 可自动接受好友请求
 * 授权检查范围广, 支持以下情形:
   * 被拉近50人以下的群(因为默认不需要被邀请者同意)
   * 超过50人群, 需要机器人同意的群
@@ -98,7 +98,7 @@ HoshinoBot项目地址: https://github.com/Ice-Cirno/HoshinoBot
 此版本主要新增日志、人数限制、白名单系统、以及网页授权管理
 * 配置文件新增以下参数：
   * `DEBUG`, 默认关闭, 开启后会详细记录所有的日志.
-  * `LOG`, 默认开启, 记录日志重要日志信息.
+  * `LOG`, 默认开启, 记录重要日志信息, 如进群退群卡密使用
   * `LEAVE_AFTER_DAYS`, 在授权到期X天后再退群(仅当配置`AUTO_LEAVE`为True时有效)
   * `MAX_GROUP_NUM`, 最大允许的群人数
 * 功能变更与调整:
@@ -126,7 +126,7 @@ HoshinoBot项目地址: https://github.com/Ice-Cirno/HoshinoBot
   * `REG_HELP_GROUP`, 群聊充值帮助文本
   * `REG_HELP_PRIVATE`, 私聊充值帮助文本
   * `ADMIN_HELP`, 给管理员的帮助文本
-  * `FRIEND_APPROVE`, 是否自动接收加好友的请求
+  * `FRIEND_APPROVE`, 是否自动接受加好友的请求
 * 文件结构调整
 * 新增指令【快速检查】【充值帮助】【管理员帮助】
 * 新增特性: 处理加好友事件
