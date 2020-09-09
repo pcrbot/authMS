@@ -4,6 +4,7 @@ from hoshino import msghandler, priv, Service
 import hoshino, nonebot
 import random, re, string
 from .web_server import auth
+from .web_activate import activate
 from . import util
 
 import time, pytz
@@ -25,7 +26,8 @@ except:
 if config.ENABLE_WEB:
     # 开启web请修改authMS.py
     app = nonebot.get_bot().server_app
-    app.register_blueprint(auth)  
+    app.register_blueprint(auth)
+    app.register_blueprint(activate)
 
 
 @on_command('充值帮助',aliases=('我要充钱','续费帮助','我要续费','👴要充钱'),only_to_me=False)

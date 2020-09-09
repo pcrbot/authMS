@@ -130,6 +130,7 @@ HoshinoBot项目地址: https://github.com/Ice-Cirno/HoshinoBot
 * 文件结构调整
 * 新增指令【快速检查】【充值帮助】【管理员帮助】
 * 新增特性: 处理加好友事件
+* 新增特性: 与管理后台分离的激活界面(感谢[A-kirami](https://github.com/A-kirami)
 
 ### v0.1.3
 更新时间:2020/8/22 
