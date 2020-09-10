@@ -55,7 +55,7 @@ async def approve_group_invite_auto(session):
     if int(session.event.user_id) != int(sid):
         # 入群的人不是自己
         return
-    rt = check_number(gid)
+    rt = await check_number(gid)
     if rt == 'quitted':
         util.log(f'被强制拉入群{gid}中,该群授权人数超标, 已自动退出','group_leave')
         return
@@ -119,7 +119,7 @@ async def check_auth():
     bot = nonebot.get_bot()
 
     # 该函数会独立地检查一次所有群的人数是否超标
-    check_number()
+    await check_number()
 
     group_info_all = await util.get_group_list_all()
     for group in group_info_all:
