@@ -186,7 +186,7 @@ async def no_number_check_chat(session):
     await session.finish(f'已将群{gid}添加至白名单, 类型为不检查人数')
 
 
-@on_command('不检查授权', aliases=('设置人数白名单'), only_to_me=False)
+@on_command('不检查授权', aliases=('设置授权白名单'), only_to_me=False)
 async def no_auth_check_chat(session):
     if session.event.detail_type == 'group':
         gid = session.event.group_id
