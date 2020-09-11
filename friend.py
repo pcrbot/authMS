@@ -9,5 +9,3 @@ async def friend_approve(session):
     else:
         util.log(f'收到来自{session.event.user_id}的好友请求','friend_add')
         hoshino.logger.info(f'收到来自{session.event.user_id}的好友请求')
-    
-    

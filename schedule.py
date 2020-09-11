@@ -1,8 +1,8 @@
 from . import *
 from .group import check_auth
 from datetime import *
-tz =  pytz.timezone('Asia/Shanghai')
 
+tz = pytz.timezone('Asia/Shanghai')
 
 sv = Service('authMS',
              manage_priv=priv.SUPERUSER,
@@ -10,7 +10,8 @@ sv = Service('authMS',
              enable_on_default=True,
              visible=False)
 
-@sv.scheduled_job('cron',hour='*',minute='02')
+
+@sv.scheduled_job('cron', hour='*', minute='02')
 async def check_auth_sdj():
     '''
     自动检查Bot已加入的群的授权是否过期  \n
@@ -26,4 +27,3 @@ async def check_auth_sdj():
     if not config.ENABLE_AUTH:
         return
     await check_auth()
-
