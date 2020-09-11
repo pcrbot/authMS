@@ -1,4 +1,6 @@
 from nonebot import on_command, on_notice, on_request,CQHttpError, NoticeSession
+from sqlitedict import SqliteDict
+
 from hoshino import msghandler, priv, Service
 
 import hoshino, nonebot
@@ -13,9 +15,14 @@ from math import ceil
 import re
 import asyncio
 
-key_dict = msghandler.key_dict
-group_dict = msghandler.group_dict
-trial_list = msghandler.trial_list
+if hoshino.config.authMS.auth_config.ENABLE_COM:
+    path_first = hoshino.config.authMS.auth_config.DB_PATH
+else:
+    path_first = ''
+
+key_dict = SqliteDict(path_first + 'key.sqlite', autocommit=True)
+group_dict = SqliteDict(path_first + 'group.sqlite', autocommit=True)
+trial_list = SqliteDict(path_first + 'trial.sqlite', autocommit=True)  # 试用列表
 
 try:
     config = hoshino.config.authMS.auth_config

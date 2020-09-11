@@ -13,6 +13,12 @@ class auth_config(object):
     # WEB管理密码, 推荐使用强密码
     PASSWORD = 'Password123456!'
 
+
+    # -------------------事件过滤器---------------------
+    # 事件过滤器配置文件的地址,例如/root/go-cqhttp/filter.json(必须甜心)
+    EVENT_FILTER = r''
+
+
 # -------------------数据互通---------------------
     # 互通数据库的目录,例如group.sqlite位置/root/database/group.sqlite
     # 此时便填写/root/database/即可
