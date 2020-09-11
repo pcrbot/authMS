@@ -1,0 +1,18 @@
+{
+    ".or": [
+        {
+            "post_type": {
+                ".regex": "notice|request|meta_event"
+            }
+        },
+        {
+            "message_type": "private"
+        },
+        {
+            "group_id": {
+                ".in": [
+                ]
+            }
+        }
+    ]
+}

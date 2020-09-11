@@ -1,7 +1,8 @@
 from . import *
+from ... import get_bot
 
 
-@on_command('变更所有授权',aliases=('批量变更','批量授权'), only_to_me=False)
+@on_command('变更所有授权', aliases=('批量变更', '批量授权'), only_to_me=False)
 async def add_time_all_chat(session):
     '''
     为所有已有授权的群增加授权x天, 可用于维护补偿时间等场景
@@ -12,14 +13,15 @@ async def add_time_all_chat(session):
         return
     if not session.current_arg:
         await session.finish('请发送需要为所有群增加或减少的长, 例如“变更所有授权 7”')
-    
+
     days = int(session.current_arg.strip())
 
     authed_group_list = await util.get_authed_group_list()
     for ginfo in authed_group_list:
-        util.change_authed_time(ginfo['gid'], days)
+        await util.change_authed_time(ginfo['gid'], days)
     util.log(f'已为所有群授权增加{days}天')
     await session.finish(f'已为所有群授权增加{days}天')
+
 
 @on_command('授权列表', aliases=('查看授权列表', '查看全部授权', '查询全部授权'), only_to_me=True)
 async def group_list_chat(session):
@@ -37,7 +39,7 @@ async def group_list_chat(session):
 
     if not session.current_arg.strip():
         # 无其他参数默认第一页
-        page = 1  
+        page = 1
     else:
         page = int(session.current_arg.strip())
 
@@ -47,7 +49,7 @@ async def group_list_chat(session):
     length = len(authed_group_list)
 
     groups_in_page = config.GROUPS_IN_PAGE
-    pages_all = ceil(length/groups_in_page) # 向上取整
+    pages_all = ceil(length / groups_in_page)  # 向上取整
     if page > pages_all:
         await session.finish(f'没有那么多页, 当前共有授权信息{length}条, 共{pages_all}页')
     if page <= 0:
@@ -55,7 +57,7 @@ async def group_list_chat(session):
     i = 0
     for item in authed_group_list:
         i = i + 1
-        if i < (page-1)*groups_in_page+1 or i > page*groups_in_page:
+        if i < (page - 1) * groups_in_page + 1 or i > page * groups_in_page:
             continue
         gid = int(item['gid'])
         g_time = util.check_group(gid)
@@ -65,13 +67,12 @@ async def group_list_chat(session):
                                                end='\n\n',
                                                group_name_sp=item['groupName'])
         msg += msg_new
-        
+
     msg += f'第{page}页, 共{pages_all}页\n发送查询授权+页码以查询其他页'
     await session.send(msg)
 
 
-
-@on_command('变更授权',aliases=('更改时间', '授权', '更改授权时间', '更新授权'),only_to_me=False)
+@on_command('变更授权', aliases=('更改时间', '授权', '更改授权时间', '更新授权'), only_to_me=False)
 async def add_time_chat(session):
     origin = session.current_arg.strip()
     pattern = re.compile(r'^(\d{5,15})([+-]\d{1,5})$')
@@ -86,7 +87,7 @@ async def add_time_chat(session):
         await session.finish('只有主人才能变更授权哦')
         return
 
-    result = util.change_authed_time(gid, days)
+    result = await util.change_authed_time(gid, days)
     msg = await util.process_group_msg(gid, result, title='变更成功, 变更后的群授权信息:\n')
     await session.finish(msg)
 
@@ -132,7 +133,7 @@ async def auth_status_chat(session):
     await session.send(msg)
 
 
-@on_command('清除授权',aliases=('删除授权','移除授权','移除群授权','删除群授权'),only_to_me=True)
+@on_command('清除授权', aliases=('删除授权', '移除授权', '移除群授权', '删除群授权'), only_to_me=True)
 async def remove_auth_chat(session):
     '''
     完全移除一个群的授权 \n
@@ -150,12 +151,12 @@ async def remove_auth_chat(session):
 
     if not time_left:
         await session.finish('此群未获得授权')
-    msg = await util.process_group_msg(gid=gid,expiration=time_left,title='已移除授权,原授权信息如下\n')
-    util.change_authed_time(gid=gid, operate='clear')
+    msg = await util.process_group_msg(gid=gid, expiration=time_left, title='已移除授权,原授权信息如下\n')
+    await util.change_authed_time(gid=gid, operate='clear')
 
     if config.AUTO_LEAVE:
         try:
-            await session.bot.send_group_msg(group_id=gid,message=config.GROUP_LEAVE_MSG)
+            await session.bot.send_group_msg(group_id=gid, message=config.GROUP_LEAVE_MSG)
             await session.bot.set_group_leave(group_id=gid)
             msg += '\n已退出该群聊'
         except Exception as e:
@@ -170,18 +171,18 @@ async def no_number_check_chat(session):
     '''
     if session.event.detail_type == 'group':
         gid = session.event.group_id
-    elif session.event.detail_type == 'private' :
+    elif session.event.detail_type == 'private':
         if not session.current_arg.strip():
             await session.finish('请输入正确的群号, 例如“不检查人数 123456789”')
         gid = int(session.current_arg.strip())
-    
+
     uid = session.event.user_id
     if uid not in hoshino.config.SUPERUSERS:
         util.log(f'{uid}尝试为群{gid}清除设置不检查人数, 已拒绝')
         await session.finish('只有主人才能设置白名单')
         return
 
-    util.allowlist(group_id=gid, operator='add',nocheck='no_number_check')
+    util.allowlist(group_id=gid, operator='add', nocheck='no_number_check')
     util.log(f'管理员{uid}已将群{gid}添加至白名单, 类型为不检查人数')
     await session.finish(f'已将群{gid}添加至白名单, 类型为不检查人数')
 
@@ -190,7 +191,7 @@ async def no_number_check_chat(session):
 async def no_auth_check_chat(session):
     if session.event.detail_type == 'group':
         gid = session.event.group_id
-    elif session.event.detail_type == 'private' :
+    elif session.event.detail_type == 'private':
         if not session.current_arg.strip():
             await session.finish('请输入正确的群号, 例如“不检查授权 123456789”')
         gid = int(session.current_arg.strip())
@@ -200,7 +201,7 @@ async def no_auth_check_chat(session):
         util.log(f'{uid}尝试为群{gid}清除设置不检查授权, 已拒绝')
         await session.finish('只有主人才能设置白名单')
         return
-    util.allowlist(group_id=gid, operator='add',nocheck='no_auth_check')
+    util.allowlist(group_id=gid, operator='add', nocheck='no_auth_check')
     util.log(f'已将群{gid}添加至白名单, 类型为不检查授权')
     await session.finish(f'已将群{gid}添加至白名单, 类型为不检查授权')
 
@@ -212,7 +213,7 @@ async def no_check_chat(session):
     '''
     if session.event.detail_type == 'group':
         gid = session.event.group_id
-    elif session.event.detail_type == 'private' :
+    elif session.event.detail_type == 'private':
         if not session.current_arg.strip():
             await session.finish('请输入正确的群号, 例如“添加白名单 123456789”')
         gid = int(session.current_arg.strip())
@@ -222,8 +223,8 @@ async def no_check_chat(session):
         util.log(f'{uid}尝试为群{gid}清除设置添加白名单, 已拒绝')
         await session.finish('只有主人才能设置白名单')
         return
-    
-    util.allowlist(group_id=gid, operator='add',nocheck='no_check')
+
+    util.allowlist(group_id=gid, operator='add', nocheck='no_check')
     util.log(f'已将群{gid}添加至白名单, 类型为全部不检查')
     await session.finish(f'已将群{gid}添加至白名单, 类型为全部不检查')
 
@@ -239,7 +240,7 @@ async def remove_allowlist_chat(session):
         util.log(f'{uid}尝试移除白名单{gid}, 已拒绝')
         await session.finish('只有主人才能移除白名单')
         return
-    
+
     re_code = util.allowlist(group_id=gid, operator='remove')
     if re_code == 'not in':
         await session.finish(f'群{gid}不在白名单中')
@@ -247,7 +248,7 @@ async def remove_allowlist_chat(session):
     util.log(f'已将群{gid}移出白名单')
 
 
-@on_command('全部白名单', aliases=('白名单列表','所有白名单'))
+@on_command('全部白名单', aliases=('白名单列表', '所有白名单'))
 async def get_allowlist_chat(session):
     if session.event.user_id not in hoshino.config.SUPERUSERS:
         util.log(f'{session.event.user_id}尝试查看白名单, 已拒绝')
@@ -261,7 +262,7 @@ async def get_allowlist_chat(session):
     gname_dir = await util.get_group_info(group_ids=gids, info_type='group_name')
     print(gname_dir)
     # 考虑到一般没有那么多白名单, 因此此处不做分页
-    i = 1 
+    i = 1
     for gid in gname_dir:
         msg += f'第{i}条:   群号{gid}\n'
         gname = gname_dir[gid]
@@ -269,3 +270,13 @@ async def get_allowlist_chat(session):
         msg += f'群名:{gname}, 类型:{gnocheck}\n\n'
 
     session.finish(msg)
+
+
+@on_command('刷新事件过滤器')
+async def reload_ef(session):
+    if session.event.user_id not in hoshino.config.SUPERUSERS:
+        util.log(f'{session.event.user_id}刷新事件过滤器, 已拒绝')
+        await session.finish('只有主人才能刷新事件过滤器')
+        return
+    await util.flush_group()
+    await session.send("刷新成功!")

@@ -1,5 +1,6 @@
 from . import *
-tz =  pytz.timezone('Asia/Shanghai')
+
+tz = pytz.timezone('Asia/Shanghai')
 from datetime import *
 
 
@@ -25,19 +26,19 @@ async def approve_group_invite(session):
         return
     gid = session.event.group_id
     ev = session.event
-    
+
     new_group_auth = util.new_group_check(gid)
     if new_group_auth == 'expired' or new_group_auth == 'no trial':
         await session.bot.set_group_add_request(flag=ev.flag,
-                                                    sub_type=ev.sub_type,
-                                                    approve=False,
-                                                    reason='此群无授权, 请联系维护组')
-        util.log(f'接受到加群邀请,群号{gid}授权状态{new_group_auth}, 拒绝加入','group_add')
+                                                sub_type=ev.sub_type,
+                                                approve=False,
+                                                reason='此群无授权, 请联系维护组')
+        util.log(f'接受到加群邀请,群号{gid}授权状态{new_group_auth}, 拒绝加入', 'group_add')
     elif new_group_auth == 'authed' or new_group_auth == 'trial':
         await session.bot.set_group_add_request(flag=ev.flag,
                                                 sub_type=ev.sub_type,
                                                 approve=True)
-        util.log(f'接受到加群邀请,群号{gid}授权状态{new_group_auth}, 同意加入','group_add')
+        util.log(f'接受到加群邀请,群号{gid}授权状态{new_group_auth}, 同意加入', 'group_add')
     else:
         pass
 
@@ -57,7 +58,7 @@ async def approve_group_invite_auto(session):
         return
     rt = await check_number(gid)
     if rt == 'quitted':
-        util.log(f'被强制拉入群{gid}中,该群授权人数超标, 已自动退出','group_leave')
+        util.log(f'被强制拉入群{gid}中,该群授权人数超标, 已自动退出', 'group_leave')
         return
     elif rt == 'overflow':
         # 人数超标不自动试用
@@ -66,22 +67,22 @@ async def approve_group_invite_auto(session):
         new_group_auth = util.new_group_check(gid)
     if new_group_auth == 'expired' or new_group_auth == 'no trial':
         if config.AUTO_LEAVE:
-            await util.gun_group(group_id=gid,reason='无授权或授权已过期')
-            util.log(f'被强制拉入群{gid}中,该群授权状态{new_group_auth}, 已自动退出','group_leave')
+            await util.gun_group(group_id=gid, reason='无授权或授权已过期')
+            util.log(f'被强制拉入群{gid}中,该群授权状态{new_group_auth}, 已自动退出', 'group_leave')
             hoshino.logger.info(f'被强制拉入群{gid}中,该群授权状态{new_group_auth}, 已自动退出')
     elif new_group_auth == 'authed' or new_group_auth == 'trial':
-        await asyncio.sleep(1) # 别发太快了
+        await asyncio.sleep(1)  # 别发太快了
         msg = config.NEW_GROUP_MSG
         try:
             # 考虑全体禁言的情况, 使用try
-            await session.bot.send_group_msg(group_id=gid,message= msg)
+            await session.bot.send_group_msg(group_id=gid, message=msg)
         except Exception as e:
             hoshino.logger.error(f'向新群{gid}发送消息失败, 发生错误{type(e)}')
-    util.log(f'被强制拉入群{gid}中,该群授权状态{new_group_auth}','group_add')
+    util.log(f'被强制拉入群{gid}中,该群授权状态{new_group_auth}', 'group_add')
     hoshino.logger.info(f'被强制拉入群{gid}中,该群授权状态{new_group_auth}')
 
 
-@on_command('退群',only_to_me=False)
+@on_command('退群', only_to_me=False)
 async def group_leave_chat(session):
     '''
     退群, 并不影响授权, 清除授权请试用清除授权命令
@@ -91,17 +92,17 @@ async def group_leave_chat(session):
         return
     gid = int(session.current_arg.strip())
     await session.send('正在褪裙...')
-    
+
     rt_code = await util.gun_group(group_id=gid, reason='管理员操作')
     if rt_code == True:
         await session.send(f'已成功退出群{gid}')
-        util.log(f'已成功退出群{gid}','group_leave')
+        util.log(f'已成功退出群{gid}', 'group_leave')
     else:
         await session.send(f'退出群{gid}时发生错误')
-        util.log(f'退出群{gid}时发生错误','group_leave')
+        util.log(f'退出群{gid}时发生错误', 'group_leave')
 
 
-@on_command('快速检查',only_to_me=True)
+@on_command('快速检查', only_to_me=True)
 async def quick_check_chat(session):
     '''
     立即执行一次检查, 内容与定时任务一样
@@ -136,50 +137,52 @@ async def check_auth():
                 if rt_code == 'no_check' or rt_code == 'no_auth_check':
                     # 在白名单, 并不会影响过期事件
                     continue
-                if config.AUTO_LEAVE and time_left.total_seconds() < -config.LEAVE_AFTER_DAYS*86400:
+                if config.AUTO_LEAVE and time_left.total_seconds() < -config.LEAVE_AFTER_DAYS * 86400:
                     # 自动退群且已过期超过LEAVE_AFTER_DAYS天, 如果设置LEAVE_AFTER_DAYS为0则立刻退群
-                    util.gun_group(group_id=gid, reason='授权过期')
-                    util.log(f'群{gid}授权过期,已自动退群','group_leave')
+                    await util.gun_group(group_id=gid, reason='授权过期')
+                    util.log(f'群{gid}授权过期,已自动退群', 'group_leave')
                 else:
                     # 不自动退群, 只发消息提醒
                     t_sp = '【提醒】本群授权已过期\n'
                     e_sp = '如果需要续费请联系机器人维护'
                     gname_sp = group['group_name']
-                    msg_expired = await util.process_group_msg(gid=gid, expiration=group_dict[gid], title=t_sp, end=e_sp, group_name_sp=gname_sp)
+                    msg_expired = await util.process_group_msg(gid=gid, expiration=group_dict[gid], title=t_sp,
+                                                               end=e_sp, group_name_sp=gname_sp)
                     try:
-                        await bot.send_group_msg(group_id=gid,message=msg_expired)
+                        await bot.send_group_msg(group_id=gid, message=msg_expired)
                     except Exception as e:
                         util.log(f'向群{gid}发送过期提醒时发生错误{type(e)}')
                 group_dict.pop(gid)
-
+                await util.flush_group()
             if days_left < config.REMIND_BRFORE_EXPIRED and days_left >= 0:
                 # 将要过期
                 msg_remind = await util.process_group_msg(
                     gid=gid,
                     expiration=group_dict[gid],
-                    title=f'【提醒】本群的授权已不足{days_left+1}天\n',
+                    title=f'【提醒】本群的授权已不足{days_left + 1}天\n',
                     end='\n如果需要续费请联系机器人维护',
                     group_name_sp=group['group_name'])
                 try:
                     await bot.send_group_msg(group_id=gid,
-                                                     message=msg_remind)
+                                             message=msg_remind)
                 except Exception as e:
                     hoshino.logger.error(f'向群{gid}发生到期提醒消息时发生错误{type(e)}')
-            util.log(f'群{gid}的授权不足{days_left+1}天')
-        
+            util.log(f'群{gid}的授权不足{days_left + 1}天')
+
         elif gid not in trial_list:
             # 正常情况下, 无论是50人以上群还是50人以下群, 都需要经过机器人同意或检查
             # 但是！如果机器人掉线期间被拉进群试用, 将无法处理试用, 因此有了这部分憨批代码
 
             if not config.NEW_GROUP_DAYS and config.AUTO_LEAVE:
                 # 无新群试用机制,直接退群
-                await bot.send_group_msg(group_id=gid,message=config.GROUP_LEAVE_MSG)
-                util.log(f'发现无记录而被拉入的新群{gid}, 已退出此群','group_leave')
+                await bot.send_group_msg(group_id=gid, message=config.GROUP_LEAVE_MSG)
+                util.log(f'发现无记录而被拉入的新群{gid}, 已退出此群', 'group_leave')
                 await bot.set_group_leave(group_id=gid)
                 continue
             else:
                 util.new_group_check(gid)
-                util.log(f'发现无记录而被拉入的新群{gid}, 已开始试用','group_add')
+                util.log(f'发现无记录而被拉入的新群{gid}, 已开始试用', 'group_add')
+
 
 @on_notice('group_decrease.kick_me')
 async def kick_me_alert(session: NoticeSession):
@@ -188,7 +191,7 @@ async def kick_me_alert(session: NoticeSession):
     '''
     group_id = session.event.group_id
     operator_id = session.event.operator_id
-    util.log(f'被{operator_id}踢出群{group_id}','group_kick')
+    util.log(f'被{operator_id}踢出群{group_id}', 'group_kick')
 
 
 async def check_number(group_id=0):
@@ -205,7 +208,7 @@ async def check_number(group_id=0):
             # 人数超过, 检测是否在白名单 
             rt_code = util.allowlist(gid)
             if rt_code == 'not in' or rt_code == 'no_check_auth':
-                util.log('群{gid}人数超过设定值, 当前人数{gnums[gid]}, 白名单状态{rt_code}','number_check')
+                util.log('群{gid}人数超过设定值, 当前人数{gnums[gid]}, 白名单状态{rt_code}', 'number_check')
                 if config.AUTO_LEAVE:
                     await util.gun_group(group_id=gid, reason='群人数超过管理员设定的最大值')
                     # 新入群立刻进行对该群一次人数检查, 此时应当返回一个值, 防止处理中接下来的入群欢迎等操作
@@ -215,5 +218,3 @@ async def check_number(group_id=0):
                     await util.notify_group(group_id=gid, txt='群人数超过管理员设定的最大值, 请联系管理员')
                     if group_id != 0:
                         return 'overflow'
-
-               
