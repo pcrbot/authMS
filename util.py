@@ -3,7 +3,7 @@ from datetime import timedelta
 from datetime import *
 import time, os, json
 import asyncio
-from random import random
+import random
 
 import nonebot
 from sqlitedict import SqliteDict
