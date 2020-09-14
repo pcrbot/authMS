@@ -1,5 +1,6 @@
 # authMS
 **v0.2.0问题较多, 请先使用旧版（从Release下载）**
+
 适用于HoshinoBot v2的授权插件, 可控制cqhttp的事件过滤器. 大部分功能以天枢授权为蓝本而开发. 本插件另有带有web服务的页面, 如果需要请在此插件的目录下新建vue目录,并下载相关链接中已编译好的文件放入目录下`vue`目录内(可能会有不兼容). 本项目主体框架由[wdvxdr1123](https://github.com/wdvxdr1123)构建, [火龙](https://github.com/xhl6666)添加了一些重要功能. 
 
 
@@ -96,7 +97,8 @@ HoshinoBot项目地址: https://github.com/Ice-Cirno/HoshinoBot
 此版本主要针对事件过滤器重构
 * 配置文件新增以下参数：
     * `EVENT_FILTER`, 事件过滤器配置文件目录.
-*指令变更:
+
+* 指令变更:
     * 【刷新事件过滤器】初始化事件过滤器
 
 ### v0.1.5
