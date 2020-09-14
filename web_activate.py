@@ -1,7 +1,10 @@
-import nonebot
 from quart import request, Blueprint, jsonify, render_template
 
+import nonebot
+
 from . import util
+
+
 
 activate = Blueprint('activate', __name__, url_prefix='/activate', template_folder="./activate"
                      , static_folder='./activate', static_url_path='')
@@ -15,5 +18,5 @@ async def activate_group():
         if key := request.args.get("key"):
             if gid := request.args.get('group'):
                 group_id = int(gid)
-                util.reg_group(group_id, key)
+                await util.reg_group(group_id, key)
         return await render_template("activate.html")

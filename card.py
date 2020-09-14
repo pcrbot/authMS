@@ -1,4 +1,12 @@
-from . import *
+from nonebot import on_command
+from math import ceil
+
+import hoshino
+import re
+
+from . import util
+from .constant import config
+
 
 
 @on_command('生成卡密', only_to_me=True)
@@ -94,15 +102,14 @@ async def reg_group_chat(session):
         gid = session.event.group_id
         key = session.current_arg.strip()
     else:
-        # 讨论组搁这儿充值你🐎呢
         return
     days = util.query_key(key)
-    result = util.reg_group(gid, key)
+    result = await util.reg_group(gid, key)
+    print(result)
     if result == False:
         # 充值失败
         msg = '卡密无效, 请检查是否有误或已被使用, 如果无此类问题请联系发卡方'
     else:
-        
         util.log(f'{session.event.user_id}使用卡密{key}为群{gid}成功充值{days}天','card_use')
         msg = await util.process_group_msg(gid, result, '充值成功\n')
     await session.finish(msg)

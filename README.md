@@ -1,7 +1,7 @@
 # authMS
 **v0.2.0问题较多, 请先使用旧版（从Release下载）**
 
-适用于HoshinoBot v2的授权插件, 可控制cqhttp的事件过滤器. 大部分功能以天枢授权为蓝本而开发. 本插件另有带有web服务的页面, 如果需要请在此插件的目录下新建vue目录,并下载相关链接中已编译好的文件放入目录下`vue`目录内(可能会有不兼容). 本项目主体框架由[wdvxdr1123](https://github.com/wdvxdr1123)构建, [火龙](https://github.com/xhl6666)添加了一些重要功能. 
+适用于HoshinoBot v2的授权插件, 可控制cqhttp的事件过滤器. 大部分功能以天枢授权为蓝本而开发. 本插件另有带有web服务的页面, 如果需要请按照注释开启web. 本项目主体框架由[wdvxdr1123](https://github.com/wdvxdr1123)构建, [火龙](https://github.com/xhl6666)添加了一些重要功能. 
 
 
 本授权系统的开发调试过程均以[go-cqhttp](https://github.com/Mrs4s/go-cqhttp)进行, [cqhttp-mirai](https://github.com/yyuueexxiinngg/cqhttp-mirai)暂时不支持，请使用老版本。
@@ -42,7 +42,7 @@ HoshinoBot项目地址: https://github.com/Ice-Cirno/HoshinoBot
 * 【授权列表】查看所有授权群的信息,后跟数字来查看对应页数
 * 【管理员帮助】查看管理员指令
 * 【快速检查】立刻检查群的授权, 检查方式与定时任务一样
-* 【刷新事件过滤器】初始化事件过滤器
+* 【刷新事件过滤器】手动刷新事件过滤器
 
 ### 仅限超级管理员的指令
 * 【变更授权 123456789+5】为群123456789增加5天授权, 也可以是减
@@ -93,13 +93,14 @@ HoshinoBot项目地址: https://github.com/Ice-Cirno/HoshinoBot
 ## 更新日志
 
 ### v0.2.0
-更新时间:2020/9/11
+更新时间:2020/9/15
 此版本主要针对事件过滤器重构
 * 配置文件新增以下参数：
     * `EVENT_FILTER`, 事件过滤器配置文件目录.
-
+* 功能变更与调整:
+  * 直接内置了编译好的vue文件
 * 指令变更:
-    * 【刷新事件过滤器】初始化事件过滤器
+  * 新增管理员指令【刷新事件过滤器】
 
 ### v0.1.5
 更新时间:2020/9/9

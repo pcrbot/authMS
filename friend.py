@@ -1,4 +1,11 @@
-from . import *
+from nonebot import on_request
+
+import hoshino
+
+from .constant import config
+from . import util
+
+
 
 @on_request('friend')
 async def friend_approve(session):

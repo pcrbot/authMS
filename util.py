@@ -1,29 +1,15 @@
-import string
-from datetime import timedelta
-from datetime import *
-import time, os, json
+
+from hoshino import Service, priv
+from datetime import timedelta, datetime
+
+import random, string
+import os
+import time, json
 import asyncio
-import random
+import nonebot, hoshino
 
-import nonebot
-from sqlitedict import SqliteDict
+from .constant import key_dict, group_dict, trial_list, config
 
-import hoshino
-
-if hoshino.config.authMS.auth_config.ENABLE_COM:
-    path_first = hoshino.config.authMS.auth_config.DB_PATH
-else:
-    path_first = ''
-
-key_dict = SqliteDict(path_first + 'key.sqlite', autocommit=True)
-group_dict = SqliteDict(path_first + 'group.sqlite', autocommit=True)
-trial_list = SqliteDict(path_first + 'trial.sqlite', autocommit=True)  # 试用列表
-
-try:
-    config = hoshino.config.authMS.auth_config
-except:
-    # 保不准哪个憨憨又不读README呢
-    hoshino.logger.error('authMS无配置文件!请仔细阅读README')
 
 
 def generate_key():
@@ -99,14 +85,14 @@ def check_group(gid):
         return 0
 
 
-def reg_group(gid, key):
+async def reg_group(gid, key):
     '''
     为一个群充值, 卡密无效则返回False, 否则返回剩余有效期（datatime格式）
     '''
     days = query_key(key)
     if days == 0:
         return False
-    past_time = change_authed_time(gid, days)
+    past_time = await change_authed_time(gid, days)
     del_key(key)
     return past_time
 
@@ -129,7 +115,6 @@ async def change_authed_time(gid, time_change=0, operate=''):
     else:
         today = datetime.now()
         group_dict[gid] = today + timedelta(days=time_change)
-        await flush_group()
     return group_dict[gid]
 
 
@@ -218,7 +203,7 @@ async def process_group_msg(gid, expiration, title: str = '', end='', group_name
     return msg
 
 
-def new_group_check(gid):
+async def new_group_check(gid):
     '''
     加入新群时检查此群是否符合条件,如果有试用期则会自动添加试用期授权时间, 同时添加试用标志
     '''
@@ -228,6 +213,7 @@ def new_group_check(gid):
         if time_left.total_seconds() <= 0:
             # 群在列表但是授权过期, 从授权列表移除此群
             group_dict.pop(gid)
+            await flush_group()
             return 'expired'
 
         return 'authed'
@@ -237,11 +223,11 @@ def new_group_check(gid):
     # 添加试用标记
     trial_list[gid] = 1
     # 添加试用天数
-    change_authed_time(gid=gid, time_change=config.NEW_GROUP_DAYS)
+    await change_authed_time(gid=gid, time_change=config.NEW_GROUP_DAYS)
     return 'trial'
 
 
-def transfer_group(old_gid, new_gid):
+async def transfer_group(old_gid, new_gid):
     '''
     转移授权,新群如果已经有时长了则在现有时长上增加
     '''
@@ -249,7 +235,7 @@ def transfer_group(old_gid, new_gid):
     left_time = group_dict[old_gid] - today if old_gid in group_dict else timedelta(days=0)
     group_dict[new_gid] = left_time + (group_dict[new_gid] if new_gid in group_dict else today)
     group_dict.pop(old_gid)
-
+    await flush_group()
 
 async def gun_group(group_id, reason='管理员操作'):
     '''
@@ -332,7 +318,7 @@ def allowlist(group_id, operator='none', nocheck='no_number_check'):
                 allowlist = json.load(rf)
             except Exception as e:
                 # 您写的json格式有错误？扬了就好了
-                print(e)
+                hoshino.logger.error(f'读取白名单列表时发生错误{type(e)}')
                 allowlist = {}
     else:
         os.makedirs(os.path.expanduser('~/.hoshino/authMS'), exist_ok=True)
@@ -341,16 +327,19 @@ def allowlist(group_id, operator='none', nocheck='no_number_check'):
     if operator == 'none':
         return allowlist.get(str(group_id), 'not in')
     elif operator == 'add':
-        print(allowlist)
         allowlist[str(group_id)] = nocheck
-        print(allowlist)
+        hoshino.logger.error(f'已将群{group_id}添加到白名单，类型为{nocheck}')
         rt = 'ok'
     elif operator == 'remove':
         rt = allowlist.pop(str(group_id), 'not in')
         if rt != 'not in':
+            hoshino.logger.error(f'已将群{group_id}移除白名单')
             rt = 'ok'
+        else:
+            hoshino.logger.error(f'群{group_id}移除不在白名单，移除失败')
     elif operator == 'clear':
         allowlist.clear()
+        hoshino.logger.error(f'已清空所有白名单')
         rt = 'ok'
     else:
         return 'nothing to do'
@@ -423,14 +412,13 @@ def get_list(list_type='allowlist'):
 
 
 async def flush_group():
-    with open(config.EVENT_FILTER, mode="r") as f:
-        fil = f.read()
-        fil = json.loads(fil)
-    fil[".or"][2]["group_id"][".in"] = []
+    with open(config.EVENT_FILTER, mode="r", encoding='utf-8') as f:
+        fil = json.load(f)
+    fil[".or"][0]["group_id"][".in"] = []
     group_list = []
     for key, val in group_dict.iteritems():
         group_list.append(key)
-    fil[".or"][2]["group_id"][".in"] = group_list
-    with open(config.EVENT_FILTER, mode="w") as f:
+    fil[".or"][0]["group_id"][".in"] = group_list
+    with open(config.EVENT_FILTER, mode="w", encoding='utf-8') as f:
         json.dump(fil, f, indent=4, ensure_ascii=False)
     await nonebot.get_bot().call_action("reload_event_filter")

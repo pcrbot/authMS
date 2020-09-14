@@ -1,24 +1,20 @@
-from datetime import *
+from hoshino import Service, priv
+from quart import request, Blueprint, jsonify, render_template
+
 import string
 import random
-from . import util
-
 import nonebot
-from quart import request, Blueprint, jsonify, render_template
 import hoshino
-from hoshino import Service, priv
+
+from datetime import *
+from . import util
+from .constant import config
+
 
 auth = Blueprint('auth', __name__, url_prefix='/auth', template_folder="./vue", static_folder='./vue',
                  static_url_path='')
 bot = nonebot.get_bot()
 app = bot.server_app
-
-try:
-    config = hoshino.config.authMS.auth_config
-except:
-    # 保不准哪个憨憨又不读README呢
-    hoshino.logger.error('authMS无配置文件!请仔细阅读README')
-
 manage_password = config.PASSWORD  # 管理密码请在authMS.py中修改
 
 
@@ -101,7 +97,7 @@ async def update_group():
 async def activate_group():
     key = request.args.get('key')
     gid = request.args.get('gid')
-    if util.reg_group(gid, key):
+    if await util.reg_group(gid, key):
         return 'success'
     return 'failed'
 

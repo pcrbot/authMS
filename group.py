@@ -1,7 +1,14 @@
-from . import *
+from nonebot import on_request, on_notice, on_command, NoticeSession
+from datetime import datetime
+
+import pytz
+import asyncio
+import hoshino, nonebot
+
+from .constant import config, key_dict, group_dict, trial_list, config
+from . import util
 
 tz = pytz.timezone('Asia/Shanghai')
-from datetime import *
 
 
 @on_request('group')
@@ -27,7 +34,7 @@ async def approve_group_invite(session):
     gid = session.event.group_id
     ev = session.event
 
-    new_group_auth = util.new_group_check(gid)
+    new_group_auth = await util.new_group_check(gid)
     if new_group_auth == 'expired' or new_group_auth == 'no trial':
         await session.bot.set_group_add_request(flag=ev.flag,
                                                 sub_type=ev.sub_type,
@@ -64,7 +71,7 @@ async def approve_group_invite_auto(session):
         # 人数超标不自动试用
         new_group_auth = 'no trial'
     else:
-        new_group_auth = util.new_group_check(gid)
+        new_group_auth = await util.new_group_check(gid)
     if new_group_auth == 'expired' or new_group_auth == 'no trial':
         if config.AUTO_LEAVE:
             await util.gun_group(group_id=gid, reason='无授权或授权已过期')
@@ -80,6 +87,16 @@ async def approve_group_invite_auto(session):
             hoshino.logger.error(f'向新群{gid}发送消息失败, 发生错误{type(e)}')
     util.log(f'被强制拉入群{gid}中,该群授权状态{new_group_auth}', 'group_add')
     hoshino.logger.info(f'被强制拉入群{gid}中,该群授权状态{new_group_auth}')
+
+
+@on_notice('group_decrease.kick_me')
+async def kick_me_alert(session: NoticeSession):
+    '''
+    被踢出同样记录, 请配置
+    '''
+    group_id = session.event.group_id
+    operator_id = session.event.operator_id
+    util.log(f'被{operator_id}踢出群{group_id}', 'group_kick')
 
 
 @on_command('退群', only_to_me=False)
@@ -175,23 +192,11 @@ async def check_auth():
 
             if not config.NEW_GROUP_DAYS and config.AUTO_LEAVE:
                 # 无新群试用机制,直接退群
-                await bot.send_group_msg(group_id=gid, message=config.GROUP_LEAVE_MSG)
+                await util.gun_group(group_id=gid, reason='无授权')
                 util.log(f'发现无记录而被拉入的新群{gid}, 已退出此群', 'group_leave')
-                await bot.set_group_leave(group_id=gid)
-                continue
             else:
-                util.new_group_check(gid)
+                await util.new_group_check(gid)
                 util.log(f'发现无记录而被拉入的新群{gid}, 已开始试用', 'group_add')
-
-
-@on_notice('group_decrease.kick_me')
-async def kick_me_alert(session: NoticeSession):
-    '''
-    被踢出同样记录, 请配置
-    '''
-    group_id = session.event.group_id
-    operator_id = session.event.operator_id
-    util.log(f'被{operator_id}踢出群{group_id}', 'group_kick')
 
 
 async def check_number(group_id=0):

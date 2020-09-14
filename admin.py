@@ -1,5 +1,12 @@
-from . import *
-from ... import get_bot
+from nonebot import on_command
+from math import ceil
+
+import hoshino
+import re
+
+from . import util
+from .constant import config
+
 
 
 @on_command('变更所有授权', aliases=('批量变更', '批量授权'), only_to_me=False)
@@ -109,7 +116,7 @@ async def group_change_chat(session):
         session.finish('只有主人才能转移授权哦')
         return
 
-    util.transfer_group(old_gid, new_gid)
+    await util.transfer_group(old_gid, new_gid)
     await session.send(f"授权转移成功~\n旧群【{old_gid}】授权已清空\n新群【{new_gid}】授权到期时间：{util.check_group(new_gid)}")
 
 
@@ -147,7 +154,6 @@ async def remove_auth_chat(session):
     if session.event.user_id not in hoshino.config.SUPERUSERS:
         util.log(f'{session.event.user_id}尝试为群{gid}清除授权, 已拒绝')
         await session.finish('只有主人才能清除授权哦')
-        return
 
     if not time_left:
         await session.finish('此群未获得授权')
@@ -155,12 +161,8 @@ async def remove_auth_chat(session):
     await util.change_authed_time(gid=gid, operate='clear')
 
     if config.AUTO_LEAVE:
-        try:
-            await session.bot.send_group_msg(group_id=gid, message=config.GROUP_LEAVE_MSG)
-            await session.bot.set_group_leave(group_id=gid)
-            msg += '\n已退出该群聊'
-        except Exception as e:
-            hoshino.logger.error(f'退出群{gid}时发生错误{type(e)}')
+        await util.gun_group(group_id=gid, reason='管理员移除授权')
+        msg += '\n已尝试退出该群聊'
     await session.send(msg)
 
 
@@ -260,7 +262,6 @@ async def get_allowlist_chat(session):
     msg = '白名单信息\n'
     gids = list(allow_list.keys())
     gname_dir = await util.get_group_info(group_ids=gids, info_type='group_name')
-    print(gname_dir)
     # 考虑到一般没有那么多白名单, 因此此处不做分页
     i = 1
     for gid in gname_dir:
@@ -268,7 +269,7 @@ async def get_allowlist_chat(session):
         gname = gname_dir[gid]
         gnocheck = allow_list[gid]
         msg += f'群名:{gname}, 类型:{gnocheck}\n\n'
-
+        i = i+1
     session.finish(msg)
 
 

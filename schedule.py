@@ -1,14 +1,11 @@
-from . import *
+import pytz
+from hoshino import Service, priv
+from .constant import config, sv
 from .group import check_auth
-from datetime import *
+import datetime
 
 tz = pytz.timezone('Asia/Shanghai')
 
-sv = Service('authMS',
-             manage_priv=priv.SUPERUSER,
-             help_=config.REG_HELP_GROUP,
-             enable_on_default=True,
-             visible=False)
 
 
 @sv.scheduled_job('cron', hour='*', minute='02')
@@ -20,7 +17,7 @@ async def check_auth_sdj():
     v0.1.1后新增特性, 在配置ENABLE_AUTH为0, 则不会自动检查, 并且整个授权系统不生效, 但是可以充值, 生成卡密等,
     以度过刚装上授权系统后的过渡期
     '''
-    now = datetime.now(tz)
+    now = datetime.datetime.now(tz)
     hour_now = now.hour
     if hour_now % config.FREQUENCY != 0:
         return
