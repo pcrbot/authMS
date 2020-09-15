@@ -115,6 +115,7 @@ async def change_authed_time(gid, time_change=0, operate=''):
     else:
         today = datetime.now()
         group_dict[gid] = today + timedelta(days=time_change)
+        await flush_group()
     return group_dict[gid]
 
 

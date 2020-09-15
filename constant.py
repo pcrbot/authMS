@@ -5,7 +5,7 @@ import os
 import hoshino
 
 
-__version__ = '0.2.0.1'
+__version__ = '0.2.0.2'
 
 
 if hoshino.config.authMS.auth_config.ENABLE_COM:
