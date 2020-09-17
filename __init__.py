@@ -40,4 +40,4 @@ async def master_help_chat(session):
 async def check_new_ver_chat(session):
     if session.event.user_id not in hoshino.config.SUPERUSERS:
         return
-    await session.finish(f'授权系统当前版本{__version__}')
+    await session.finish(f'授权系统当前版本v{__version__}')

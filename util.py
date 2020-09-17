@@ -105,9 +105,9 @@ async def change_authed_time(gid, time_change=0, operate=''):
         try:
             # 用try是因为可能会尝试给本来就无授权的群清空授权, 此种情况并不需要另外通知, 因为最终目的一致
             group_dict.pop(gid)
-            await flush_group()
         except:
             pass
+        await flush_group()
         return 0
 
     if gid in group_dict:
@@ -216,7 +216,7 @@ async def new_group_check(gid):
             group_dict.pop(gid)
             await flush_group()
             return 'expired'
-
+        await flush_group()
         return 'authed'
 
     if config.NEW_GROUP_DAYS <= 0 or gid in trial_list:
