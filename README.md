@@ -1,10 +1,11 @@
 # authMS
-**v0.2.0问题较多, 请先使用旧版（从Release下载）**
 
 适用于HoshinoBot v2的授权插件, 可控制cqhttp的事件过滤器. 大部分功能以天枢授权为蓝本而开发. 本插件另有带有web服务的页面, 如果需要请按照注释开启web. 本项目主体框架由[wdvxdr1123](https://github.com/wdvxdr1123)构建, [火龙](https://github.com/xhl6666)添加了一些重要功能. 
 
 
-本授权系统的开发调试过程均以[go-cqhttp](https://github.com/Mrs4s/go-cqhttp)进行, [cqhttp-mirai](https://github.com/yyuueexxiinngg/cqhttp-mirai)暂时不支持，请使用老版本。
+本授权系统的开发调试过程均以[go-cqhttp](https://github.com/Mrs4s/go-cqhttp)进行, 请使用v0.9.21以上版本的[go-cqhttp](https://github.com/Mrs4s/go-cqhttp); 
+
+v0.2.0及之后使用事件过滤器来进行授权控制, [cqhttp-mirai](https://github.com/yyuueexxiinngg/cqhttp-mirai)暂时不支持此特性, 如果使用[cqhttp-mirai](https://github.com/yyuueexxiinngg/cqhttp-mirai)请从release下载v0.1.5-fix1版本, 请使用v0.2.2.5以上版本的cqhttp-mirai, 否则Bot进群等部分功能将不可用. 
 
 本项目使用GPL-3.0协议, 您使用本插件所造成的一切财产损失或其他形式损失, 均与开发者无关, 开发者不承担任何相关责任. 
 
