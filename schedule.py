@@ -1,14 +1,15 @@
+from nonebot import scheduler
+
 import pytz
-from hoshino import Service, priv
-from .constant import config, sv
-from .group import check_auth
 import datetime
+
+from .constant import config
+from .group import check_auth
 
 tz = pytz.timezone('Asia/Shanghai')
 
 
-
-@sv.scheduled_job('cron', hour='*', minute='02')
+@scheduler.scheduled_job('cron', hour='*', minute='02')
 async def check_auth_sdj():
     '''
     自动检查Bot已加入的群的授权是否过期  \n
