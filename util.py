@@ -16,9 +16,11 @@ def generate_key():
     '''
     生成16位卡密
     '''
-    new_key = ''.join(random.sample(string.ascii_letters + string.digits, 16))
+    begin=config.BEGIN
+    new_key = ''.join(random.sample(string.ascii_letters + string.digits, 16-len(begin)))
     while new_key in key_dict:  # 防止生成重复的卡密, 不过概率太低了。。。
-        new_key = ''.join(random.sample(string.ascii_letters + string.digits, 16))
+        new_key = ''.join(random.sample(string.ascii_letters + string.digits, 16-len(begin)))
+    new_key = begin + new_key
     return new_key
 
 
@@ -249,7 +251,7 @@ async def gun_group(group_id, reason='管理员操作'):
         await nonebot.get_bot().send_group_msg(group_id=gid, message=msg)
     except Exception as e:
         hoshino.logger.error(f'向群{group_id}发送退群消息时发生错误{e}')
-    await asyncio.sleep(1)
+    await asyncio.sleep(20)
     try:
         await nonebot.get_bot().set_group_leave(group_id=gid)
     except nonebot.CQHttpError:
@@ -279,6 +281,7 @@ LOG_LIST = [
     'group_kick',
     'group_leave',
     'friend_add',
+    'number_check'
 ]
 
 

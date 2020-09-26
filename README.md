@@ -25,6 +25,8 @@ HoshinoBot项目地址: https://github.com/Ice-Cirno/HoshinoBot
 * 支持批量操作(网页/私聊)
 * 支持手动提醒群续费(网页)
 * 可自动接受好友请求
+* 自动检查人数
+* 卡密部分自定义
 * 授权检查范围广, 支持以下情形:
   * 被拉近50人以下的群(因为默认不需要被邀请者同意)
   * 超过50人群, 需要机器人同意的群
@@ -74,14 +76,14 @@ HoshinoBot项目地址: https://github.com/Ice-Cirno/HoshinoBot
    pip install -r requirements.txt
    ```
 3. 以`filter.json`放入go-cqhttp目录下. 
-4. 在HoshinoBot统一配置目录下保存配置信息,命名为`authMS.py`, 已提供配置样板`authMS.py.example`, 按照注释修改为您需要的配置
+4. 在HoshinoBot统一配置目录下保存配置信息,命名为`authMS.py`, 已提供配置样板`authMS.py.example`, 按照注释修改为您需要的配置. 请注意, 必须配置事件过滤器路径. 
 
 
 ## 其他
 * 日志功能并非Hoshino内置的日志记录, 而是作为单独文件记录. 默认保存位置`log/authMS.log`, 默认只记录卡密使用, 加群退群被踢. 
 * 支持本机多个机器人数据互通, 详情参考`authMS.py.example`中的注释, SQLite是一个本地化的数据库, 因此不支持网络, 配置目录请注意使用斜杠`/`.
   
-* 如果您是初次使用authMS, 且希望配置为到期自动退群, 建议保持默认`ENABLE_AUTH`为0, 待完成全部现有群授权后, 再修改
+* 如果您是初次使用authMS, 且希望配置为到期自动退群, 建议保持默认`ENABLE_AUTH`为0, 待完成全部现有群授权后, 再修改.
 ## 贡献
 [GitHub@wdvxdr1123](https://github.com/wdvxdr1123)
 
@@ -91,8 +93,23 @@ HoshinoBot项目地址: https://github.com/Ice-Cirno/HoshinoBot
 
 ## 更新日志
 
+
+### v0.2.1
+更新时间:2020/9/27
+
+此版本主要进行风控规避[#16](https://github.com/pcrbot/authMS/issues/16)
+* 配置文件新增以下参数：
+    * `BEGIN`, 用以自定义卡密开头
+* 功能变更与调整:
+  * 发言与退群之间间隔增大, 并限速调用
+  * 人数检查纳入日志的记录范围
+  * 卡密开始部分支持自定义, 总长度不变, 例如PCRkPTNeGFilybVn
+  * 进群之后不会立刻退群, 而是等待下一次自动检查任务时退群
+
+
 ### v0.2.0
 更新时间:2020/9/15
+
 此版本主要针对事件过滤器重构
 * 配置文件新增以下参数：
     * `EVENT_FILTER`, 事件过滤器配置文件目录.
@@ -164,7 +181,7 @@ HoshinoBot项目地址: https://github.com/Ice-Cirno/HoshinoBot
 
 ### v0.1.1
 更新时间:2020/8/18
-* 修正Bug#1, 在设置新群使用天数为0时, 自动退群设置不起作用而直接退群
+* 修正[#1](https://github.com/pcrbot/authMS/issues/1), 在设置新群使用天数为0时, 自动退群设置不起作用而直接退群
 * 新增指令, 为所有已有授权的群修改时间
 
 ### v0.1.0

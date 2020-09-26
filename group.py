@@ -64,35 +64,28 @@ async def approve_group_invite_auto(session):
         # 入群的人不是自己
         return
     rt = await check_number(gid)
-    if rt == 'quitted':
-        util.log(f'被强制拉入群{gid}中,该群授权人数超标, 已自动退出', 'group_leave')
-        return
-    elif rt == 'overflow':
-        # 人数超标不自动试用
+    
+    if rt == 'overflow':
+        # 人数超标不自动试用, 考虑到风控, 也不会立刻退群, 而是在下一次自动检查时退群
         new_group_auth = 'no trial'
     else:
         new_group_auth = await util.new_group_check(gid)
     if new_group_auth == 'expired' or new_group_auth == 'no trial':
-        if config.AUTO_LEAVE:
-            await util.gun_group(group_id=gid, reason='无授权或授权已过期')
-            util.log(f'被强制拉入群{gid}中,该群授权状态{new_group_auth}, 已自动退出', 'group_leave')
-            hoshino.logger.info(f'被强制拉入群{gid}中,该群授权状态{new_group_auth}, 已自动退出')
+        await util.notify_group(group_id=gid, txt='本群无授权或授权或已过期, 如果您已有卡密可发送[充值帮助]来获取充值')
+        util.log(f'成功加入群{gid}中,该群授权状态{new_group_auth}, 将在下次计划任务时自动退出', 'group_leave')
+        hoshino.logger.info(f'成功加入群{gid}中,该群授权状态{new_group_auth}, 将在下次计划任务时自动退出')
     elif new_group_auth == 'authed' or new_group_auth == 'trial':
-        await asyncio.sleep(1)  # 别发太快了
-        msg = config.NEW_GROUP_MSG
-        try:
-            # 考虑全体禁言的情况, 使用try
-            await session.bot.send_group_msg(group_id=gid, message=msg)
-        except Exception as e:
-            hoshino.logger.error(f'向新群{gid}发送消息失败, 发生错误{type(e)}')
-    util.log(f'被强制拉入群{gid}中,该群授权状态{new_group_auth}', 'group_add')
-    hoshino.logger.info(f'被强制拉入群{gid}中,该群授权状态{new_group_auth}')
+        await asyncio.sleep(5)  # 别发太快了
+        # 避免重复try
+        await util.notify_group(group_id=gid, message=config.NEW_GROUP_MSG)
+    util.log(f'成功加入群{gid}中,该群授权状态{new_group_auth}', 'group_add')
+    hoshino.logger.info(f'成功加入群{gid}中,该群授权状态{new_group_auth}')
 
 
 @on_notice('group_decrease.kick_me')
 async def kick_me_alert(session: NoticeSession):
     '''
-    被踢出同样记录, 请配置
+    被踢出同样记录
     '''
     group_id = session.event.group_id
     operator_id = session.event.operator_id
@@ -214,12 +207,14 @@ async def check_number(group_id=0):
             rt_code = util.allowlist(gid)
             if rt_code == 'not in' or rt_code == 'no_check_auth':
                 util.log('群{gid}人数超过设定值, 当前人数{gnums[gid]}, 白名单状态{rt_code}', 'number_check')
-                if config.AUTO_LEAVE:
-                    await util.gun_group(group_id=gid, reason='群人数超过管理员设定的最大值')
-                    # 新入群立刻进行对该群一次人数检查, 此时应当返回一个值, 防止处理中接下来的入群欢迎等操作
-                    if group_id != 0:
-                        return 'quitted'
+                if group_id == 0:
+                    # 检查全部群的情况, 可以自动退出
+                    if config.AUTO_LEAVE:
+                        await util.gun_group(group_id=gid, reason='群人数超过管理员设定的最大值')
+                    else:
+                        await util.notify_group(group_id=gid, txt='群人数超过管理员设定的最大值, 请联系管理员')
                 else:
+                    # 检查单个群的情况, 只通知而不自动退出, 等到下次计划任务时再退出
                     await util.notify_group(group_id=gid, txt='群人数超过管理员设定的最大值, 请联系管理员')
-                    if group_id != 0:
-                        return 'overflow'
+                    return 'overflow'
+    return None

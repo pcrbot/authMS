@@ -268,7 +268,7 @@ async def get_allowlist_chat(session):
         msg += f'第{i}条:   群号{gid}\n'
         gname = gname_dir[gid]
         gnocheck = allow_list[gid]
-        msg += f'群名:{gname}, 类型:{gnocheck}\n\n'
+        msg += f'群名:{gname}\n类型:{gnocheck}\n\n'
         i = i+1
     session.finish(msg)
 
