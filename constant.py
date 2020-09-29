@@ -4,7 +4,7 @@ import os
 import hoshino
 
 
-__version__ = '0.2.1.0'
+__version__ = '0.2.1.1'
 
 try:
     config = hoshino.config.authMS.auth_config

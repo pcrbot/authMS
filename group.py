@@ -206,7 +206,7 @@ async def check_number(group_id=0):
             # 人数超过, 检测是否在白名单 
             rt_code = util.allowlist(gid)
             if rt_code == 'not in' or rt_code == 'no_check_auth':
-                util.log('群{gid}人数超过设定值, 当前人数{gnums[gid]}, 白名单状态{rt_code}', 'number_check')
+                util.log(f'群{gid}人数超过设定值, 当前人数{gnums[gid]}, 白名单状态{rt_code}', 'number_check')
                 if group_id == 0:
                     # 检查全部群的情况, 可以自动退出
                     if config.AUTO_LEAVE:
