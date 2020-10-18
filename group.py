@@ -77,7 +77,7 @@ async def approve_group_invite_auto(session):
     elif new_group_auth == 'authed' or new_group_auth == 'trial':
         await asyncio.sleep(5)  # 别发太快了
         # 避免重复try
-        await util.notify_group(group_id=gid, message=config.NEW_GROUP_MSG)
+        await util.notify_group(group_id=gid, txt=config.NEW_GROUP_MSG)
     util.log(f'成功加入群{gid}中,该群授权状态{new_group_auth}', 'group_add')
     hoshino.logger.info(f'成功加入群{gid}中,该群授权状态{new_group_auth}')
 
