@@ -115,10 +115,17 @@ async def group_change_chat(session):
         util.log(f'{session.event.user_id}尝试转移授权{old_gid}到{new_gid}, 已拒绝')
         session.finish('只有主人才能转移授权哦')
         return
-
+        
+    gtime_old = util.check_group(old_gid)
+    if gtime_old == 0:
+        await session.finish('旧群无授权, 不可进行转移')
+    if old_gid == new_gid:
+        await session.finish('宁搁这儿原地TP呢？')
+    
     await util.transfer_group(old_gid, new_gid)
-    await session.send(f"授权转移成功~\n旧群【{old_gid}】授权已清空\n新群【{new_gid}】授权到期时间：{util.check_group(new_gid)}")
-
+    gtime_new = util.check_group(new_gid)
+    msg = await util.process_group_msg(new_gid,expiration=gtime_new, title=f'旧群{old_gid}授权已清空, 新群授权状态：\n')
+    await session.finish(msg)
 
 @on_command('授权状态', only_to_me=False)
 async def auth_status_chat(session):

@@ -251,7 +251,7 @@ async def gun_group(group_id, reason='管理员操作'):
         await nonebot.get_bot().send_group_msg(group_id=gid, message=msg)
     except Exception as e:
         hoshino.logger.error(f'向群{group_id}发送退群消息时发生错误{e}')
-    await asyncio.sleep(20)
+    await asyncio.sleep(2)
     try:
         await nonebot.get_bot().set_group_leave(group_id=gid)
     except nonebot.CQHttpError:
