@@ -1,6 +1,7 @@
 
-from hoshino import Service, priv
+from hoshino.config.__bot__ import SUPERUSERS
 from datetime import timedelta, datetime
+from math import ceil
 
 import random, string
 import os
@@ -119,6 +120,14 @@ async def change_authed_time(gid, time_change=0, operate=''):
         group_dict[gid] = today + timedelta(days=time_change)
         await flush_group()
     return group_dict[gid]
+
+async def get_nickname(user_id):
+    '''
+    获取用户昵称
+    '''
+    uid = user_id
+    user_info = await nonebot.get_bot().get_stranger_info(user_id=uid)
+    return user_info['nickname']
 
 
 async def get_group_info(group_ids=0, info_type='group_name'):
@@ -270,6 +279,16 @@ async def notify_group(group_id, txt):
         return False
     return True
 
+async def notify_master(txt):
+    '''
+    通知主人
+    '''
+    try:
+        await nonebot.get_bot().send_private_msg(user_id=SUPERUSERS[0], message=txt)
+    except nonebot.CQHttpError:
+        return False
+    return True
+    
 
 def time_now():
     return time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())

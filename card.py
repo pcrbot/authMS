@@ -1,3 +1,4 @@
+from hoshino.config.__bot__ import SUPERUSERS
 from nonebot import on_command
 from math import ceil
 
@@ -110,7 +111,10 @@ async def reg_group_chat(session):
         # 充值失败
         msg = '卡密无效, 请检查是否有误或已被使用, 如果无此类问题请联系发卡方'
     else:
-        util.log(f'{session.event.user_id}使用卡密{key}为群{gid}成功充值{days}天','card_use')
+        nickname = await util.get_nickname(user_id=session.event.user_id)
+        log_info = f'{nickname}({session.event.user_id})使用了卡密{key}\n为群{gid}成功充值{days}天'
+        util.log(log_info,'card_use')
+        await util.notify_master(log_info)
         msg = await util.process_group_msg(gid, result, '充值成功\n')
     await session.finish(msg)
 
@@ -136,16 +140,27 @@ async def check_card_chat(session):
 
 @on_command('查询授权', only_to_me=False)
 async def auth_query_chat(session):
-    if session.event.detail_type == 'private':
-        # 私聊同样处理比较复杂, 且需判断是否是数字
-        if not session.current_arg:
-            await session.finish('私聊查询请发送“查询授权 群号”来进行指定群的授权查询（请注意空格）')
-        gid = session.current_arg.strip()
-        if not gid.isdigit():
-            await session.finish('请输入正确的群号')
-
-    elif session.event.detail_type == 'group':
-        gid = session.event.group_id
+    uid = session.event.user_id
+    if not session.current_arg:
+        # 无参，检查群聊与否
+        if session.event.detail_type == 'private':
+            # 私聊禁止无参数查询授权
+            await session.finish('私聊查询授权请发送“查询授权 群号”来进行指定群的授权查询（请注意空格）')
+            return
+        else:
+            # 群聊，获取gid
+            gid = session.event.group_id
+    else:
+        # 有参数，检查权限
+        if uid not in SUPERUSERS:
+            await session.finish('抱歉，您的权限不足')
+            return
+        else:
+            # 权限为超级管理员
+            gid = session.current_arg.strip() 
+            if not gid.isdigit():
+                await session.finish('请输入正确的群号')
+                return
 
     result = util.check_group(gid)
     if not result:

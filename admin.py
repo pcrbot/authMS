@@ -1,3 +1,4 @@
+from .util import notify_group
 from nonebot import on_command
 from math import ceil
 
@@ -96,7 +97,9 @@ async def add_time_chat(session):
 
     result = await util.change_authed_time(gid, days)
     msg = await util.process_group_msg(gid, result, title='变更成功, 变更后的群授权信息:\n')
+    await notify_group(group_id=gid, txt=f'机器人管理员已为本群增加{days}天授权时长，可在群内发送【查询授权】来查看到期时间。')
     await session.finish(msg)
+
 
 
 @on_command('转移授权', only_to_me=False)
@@ -125,6 +128,8 @@ async def group_change_chat(session):
     await util.transfer_group(old_gid, new_gid)
     gtime_new = util.check_group(new_gid)
     msg = await util.process_group_msg(new_gid,expiration=gtime_new, title=f'旧群{old_gid}授权已清空, 新群授权状态：\n')
+    await notify_group(group_id=old_gid, txt=f'机器人管理员已转移本群授权时长至其他群。')
+
     await session.finish(msg)
 
 @on_command('授权状态', only_to_me=False)
@@ -168,7 +173,7 @@ async def remove_auth_chat(session):
     await util.change_authed_time(gid=gid, operate='clear')
 
     if config.AUTO_LEAVE:
-        await util.gun_group(group_id=gid, reason='管理员移除授权')
+        await util.gun_group(group_id=gid, reason='机器人管理员移除授权')
         msg += '\n已尝试退出该群聊'
     await session.send(msg)
 
@@ -193,6 +198,7 @@ async def no_number_check_chat(session):
 
     util.allowlist(group_id=gid, operator='add', nocheck='no_number_check')
     util.log(f'管理员{uid}已将群{gid}添加至白名单, 类型为不检查人数')
+    await notify_group(group_id=gid, txt='机器人管理员已添加本群为白名单，将不会检查本群人数是否超标。')
     await session.finish(f'已将群{gid}添加至白名单, 类型为不检查人数')
 
 
@@ -212,6 +218,7 @@ async def no_auth_check_chat(session):
         return
     util.allowlist(group_id=gid, operator='add', nocheck='no_auth_check')
     util.log(f'已将群{gid}添加至白名单, 类型为不检查授权')
+    await notify_group(group_id=gid, txt='机器人管理员已添加本群为白名单，将不会检查本群授权是否过期。')
     await session.finish(f'已将群{gid}添加至白名单, 类型为不检查授权')
 
 
@@ -235,6 +242,7 @@ async def no_check_chat(session):
 
     util.allowlist(group_id=gid, operator='add', nocheck='no_check')
     util.log(f'已将群{gid}添加至白名单, 类型为全部不检查')
+    await notify_group(group_id=gid, txt='机器人管理员已添加本群为白名单，将不会检查本群授权以及人数。')
     await session.finish(f'已将群{gid}添加至白名单, 类型为全部不检查')
 
 
@@ -253,8 +261,9 @@ async def remove_allowlist_chat(session):
     re_code = util.allowlist(group_id=gid, operator='remove')
     if re_code == 'not in':
         await session.finish(f'群{gid}不在白名单中')
-    await session.finish(f'已将群{gid}移出白名单')
+    await notify_group(group_id=gid, txt='机器人管理员已移除本群的白名单资格')
     util.log(f'已将群{gid}移出白名单')
+    await session.finish(f'已将群{gid}移出白名单')
 
 
 @on_command('全部白名单', aliases=('白名单列表', '所有白名单'))
