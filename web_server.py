@@ -89,7 +89,7 @@ async def update_group():
         return 'failed'
     gid = int(request.args.get('gid'))
     time_change = int(request.args.get('duration'))
-    util.change_authed_time(gid, time_change)
+    await util.change_authed_time(gid, time_change)
     return 'success'
 
 
