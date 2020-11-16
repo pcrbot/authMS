@@ -141,12 +141,14 @@ async def check_auth():
             time_left = group_dict[gid] - datetime.now()
             days_left = time_left.days
 
+            rt_code = util.allowlist(gid)
+            if rt_code == 'no_check' or rt_code == 'no_auth_check':
+                # 在白名单, 并不会影响过期事件
+                continue
+        
             if time_left.total_seconds() <= 0:
                 # 已过期, 检查是否在白名单中
-                rt_code = util.allowlist(gid)
-                if rt_code == 'no_check' or rt_code == 'no_auth_check':
-                    # 在白名单, 并不会影响过期事件
-                    continue
+
                 if config.AUTO_LEAVE and time_left.total_seconds() < -config.LEAVE_AFTER_DAYS * 86400:
                     # 自动退群且已过期超过LEAVE_AFTER_DAYS天, 如果设置LEAVE_AFTER_DAYS为0则立刻退群
                     await util.gun_group(group_id=gid, reason='授权过期')
