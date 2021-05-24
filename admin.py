@@ -286,7 +286,7 @@ async def get_allowlist_chat(session):
         gnocheck = allow_list[gid]
         msg += f'群名:{gname}\n类型:{gnocheck}\n\n'
         i = i+1
-    session.finish(msg)
+    await session.finish(msg)
 
 
 @on_command('刷新事件过滤器')
