@@ -77,46 +77,51 @@ async def key_list_chat(session):
 
 
 @on_command('充值', only_to_me=False)
-async def reg_group_chat(session):
-    if not session.current_arg:
-        # 检查参数
-        await session.finish(
-            '私聊充值请发送“充值 卡密*群号”\n群聊充值请发送“充值 卡密”\n部分机器人可能不允许私聊充值，请留意空格')
+async def reg_group_chat(session: CommandSession):
 
+    key = session.get('key', prompt="请输入卡密（直接发送）")
+    if len(key) != 16:
+        session.finish('卡密错误，请检查后重新开始。')
+    days = util.query_key(key)
+    if days == 0:
+        session.finish("卡密无效，请检查后重新开始。")
     if session.event.detail_type == 'private':
         # 私聊充值
-        if not config.ALLOW_PRIVATE_REG:
-            await session.finish('本机器人已关闭私聊充值，请直接在群聊中发送“充值 卡密”来为本群充值')
-
-        origin = session.current_arg.strip()
-        pattern = re.compile(r'^(\w{16})\*(\d{5,15})$')
-        m = pattern.match(origin)
-        if m is None:
-            # 检查格式
-            msg = '充值格式错误...\n私聊使用卡密请发送“充值 卡密*群号”, 例如 充值 GTa2Nw0unPU95xqO*123456789'
-            await session.finish(msg)
-        key = m.group(1)
-        gid = m.group(2)
-
-    elif session.event.detail_type == 'group':
-        # 群聊情况比较简单
-        gid = session.event.group_id
-        key = session.current_arg.strip()
+        end = "\n如果我尚未加入您的群聊，您可以邀请我进群~"
+        gid = session.get('group_id', prompt=f"卡密有效，时长{days}天。\n请输入群号（直接发送）")
+        if not gid.isdigit():
+            session.finish("群号错误，请重新开始。")
     else:
+        end = ""
+        gid = session.event.group_id
+
+    if gid is None:
         return
+    if session.event.detail_type == 'private':
+        sid = session.event.self_id
+        group_name = await util.get_group_name(sid, gid)
+        msg = f"""[CQ:image,file={get_group_acatar_url(int(gid))}]\n
+群号:{gid}
+群名:{group_name}
+※请确认以上信息后，回复“确认”来完成本次操作。
+※回复其他内容会终止。
+"""
+        ensure = session.get("ensure", prompt=msg)
+        if ensure != "确认":
+            session.finish("已取消本次充值")
     days = util.query_key(key)
     result = await util.reg_group(gid, key)
     print(result)
-    if result == False:
+    if not result:
         # 充值失败
         msg = '卡密无效, 请检查是否有误或已被使用, 如果无此类问题请联系发卡方'
     else:
         nickname = await util.get_nickname(user_id=session.event.user_id)
         log_info = f'{nickname}({session.event.user_id})使用了卡密{key}\n为群{gid}成功充值{days}天'
-        util.log(log_info,'card_use')
+        util.log(log_info, 'card_use')
         await util.notify_master(log_info)
-        msg = await util.process_group_msg(gid, result, '充值成功\n')
-    await session.finish(msg)
+        msg = await util.process_group_msg(gid, result, '充值成功\n', end)
+    session.finish(msg)
 
 
 @on_command('检验卡密',aliases=('检查卡密'), only_to_me=False)
