@@ -1,5 +1,5 @@
 from hoshino.config.__bot__ import SUPERUSERS
-from nonebot import on_command
+from nonebot import on_command,CommandSession
 from math import ceil
 
 import hoshino
