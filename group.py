@@ -1,19 +1,20 @@
-from nonebot import on_request, on_notice, on_command, NoticeSession
+import asyncio
 from datetime import datetime
 
 import pytz
-import asyncio
-import hoshino, nonebot
+from nonebot import on_request, on_notice, on_command, NoticeSession
 
-from .constant import config, key_dict, group_dict, trial_list, config
+import hoshino
+import nonebot
 from . import util
+from .constant import group_dict, trial_list, config
 
 tz = pytz.timezone('Asia/Shanghai')
 
 
 @on_request('group')
 async def approve_group_invite(session):
-    '''
+    """
     自动处理入群邀请  \n
     由于腾讯憨批, 现在被邀请加入50人以下的群不需要验证, 因此此条目只适用于50人以上的邀请的情况, 50人以下请参见下一条函数\n
     请注意, 应当移除其他@on_request('group.add')或者其他入群管理,以防止冲突, 例如移除botmanager下的join_approve \n
@@ -23,7 +24,7 @@ async def approve_group_invite(session):
     2. 群授权已过期(新群试用也视为有授权, 期间内可自由加入)
 
     v0.1.1后新增, 配置ENABLE_AUTH为假的时候, 不检查授权
-    '''
+    """
 
     if not config.ENABLE_AUTH:
         # 配置ENABLE_AUTH为0, 则授权系统不起作用, 不会自动通过加群邀请
@@ -52,19 +53,21 @@ async def approve_group_invite(session):
 
 @on_notice('group_increase')
 async def approve_group_invite_auto(session):
-    '''
+    """
     被邀请加入50人以下群时会自动接受, 此时获得的事件类型为通知而非邀请 \n
     无法处理拒绝入群的邀请, 应当使用退群(如果开启了自动退群的话)
-    '''
+    """
+    # noinspection PyProtectedMember
     self_ids = session.bot._wsr_api_clients.keys()
     for item in self_ids:
         sid = item
     gid = session.event.group_id
+    # noinspection PyUnboundLocalVariable
     if int(session.event.user_id) != int(sid):
         # 入群的人不是自己
         return
     rt = await check_number(gid)
-    
+
     if rt == 'overflow':
         # 人数超标不自动试用, 考虑到风控, 也不会立刻退群, 而是在下一次自动检查时退群
         new_group_auth = 'no trial'
@@ -84,9 +87,9 @@ async def approve_group_invite_auto(session):
 
 @on_notice('group_decrease.kick_me')
 async def kick_me_alert(session: NoticeSession):
-    '''
+    """
     被踢出同样记录
-    '''
+    """
     group_id = session.event.group_id
     operator_id = session.event.operator_id
     util.log(f'被{operator_id}踢出群{group_id}', 'group_kick')
@@ -94,9 +97,9 @@ async def kick_me_alert(session: NoticeSession):
 
 @on_command('退群', only_to_me=False)
 async def group_leave_chat(session):
-    '''
+    """
     退群, 并不影响授权, 清除授权请试用清除授权命令
-    '''
+    """
     if session.event.user_id not in hoshino.config.SUPERUSERS:
         await session.finish('只有主人才能让我退群哦')
         return
@@ -104,7 +107,7 @@ async def group_leave_chat(session):
     await session.send('正在褪裙...')
 
     rt_code = await util.gun_group(group_id=gid, reason='管理员操作')
-    if rt_code == True:
+    if rt_code:
         await session.send(f'已成功退出群{gid}')
         util.log(f'已成功退出群{gid}', 'group_leave')
     else:
@@ -114,9 +117,9 @@ async def group_leave_chat(session):
 
 @on_command('快速检查', only_to_me=True)
 async def quick_check_chat(session):
-    '''
+    """
     立即执行一次检查, 内容与定时任务一样
-    '''
+    """
     if session.event.user_id not in hoshino.config.SUPERUSERS:
         return
     await check_auth()
@@ -124,9 +127,9 @@ async def quick_check_chat(session):
 
 
 async def check_auth():
-    '''
+    """
     检查所有已加入群的授权状态, 和人数
-    '''
+    """
     bot = nonebot.get_bot()
 
     # 该函数会独立地检查一次所有群的人数是否超标
@@ -145,7 +148,7 @@ async def check_auth():
             if rt_code == 'no_check' or rt_code == 'no_auth_check':
                 # 在白名单, 并不会影响过期事件
                 continue
-        
+
             if time_left.total_seconds() <= 0:
                 # 已过期, 检查是否在白名单中
 
@@ -166,7 +169,7 @@ async def check_auth():
                         util.log(f'向群{gid}发送过期提醒时发生错误{type(e)}')
                 group_dict.pop(gid)
                 await util.flush_group()
-            if days_left < config.REMIND_BRFORE_EXPIRED and days_left >= 0:
+            if config.REMIND_BRFORE_EXPIRED > days_left >= 0:
                 # 将要过期
                 msg_remind = await util.process_group_msg(
                     gid=gid,
@@ -195,9 +198,9 @@ async def check_auth():
 
 
 async def check_number(group_id=0):
-    '''
+    """
     检查所有群的成员数量是否符合要求, 当传入group_id时则检查传入的群
-    '''
+    """
     if group_id == 0:
         gnums = await util.get_group_info(info_type='member_count')
     else:

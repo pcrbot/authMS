@@ -1,18 +1,19 @@
-from hoshino import Service, priv
-from quart import request, Blueprint, jsonify, render_template
-
-import string
-import random
 import nonebot
-import hoshino
-
-from datetime import *
+from quart import request, Blueprint, jsonify, render_template
+import os
 from . import util
 from .constant import config
 
+runtime_path = os.path.dirname(__file__)
+web_path = os.path.join(runtime_path, "vue")
 
-auth = Blueprint('auth', __name__, url_prefix='/auth', template_folder="./vue", static_folder='./vue',
-                 static_url_path='')
+auth = Blueprint(
+    'auth', __name__,
+    url_prefix='/auth',
+    template_folder=web_path,
+    static_folder=web_path,
+    static_url_path=''
+)
 bot = nonebot.get_bot()
 app = bot.server_app
 manage_password = config.PASSWORD  # 管理密码请在authMS.py中修改
