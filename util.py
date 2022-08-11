@@ -1,43 +1,43 @@
+import asyncio
+import json
+import os
+import random
+import string
+import time
+from datetime import timedelta, datetime
+
+import hoshino
+import nonebot
 
 from hoshino.config.__bot__ import SUPERUSERS
-from datetime import timedelta, datetime
-from math import ceil
-
-import random, string
-import os
-import time, json
-import asyncio
-import nonebot, hoshino
-
 from .constant import key_dict, group_dict, trial_list, config
 
 
-
 def generate_key():
-    '''
-    生成16位卡密
-    '''
-    begin=config.BEGIN
-    new_key = ''.join(random.sample(string.ascii_letters + string.digits, 16-len(begin)))
+    """
+    生成32位卡密
+    """
+    begin = config.BEGIN
+    new_key = ''.join(random.sample(string.ascii_letters + string.digits, 32 - len(begin)))
     while new_key in key_dict:  # 防止生成重复的卡密, 不过概率太低了。。。
-        new_key = ''.join(random.sample(string.ascii_letters + string.digits, 16-len(begin)))
+        new_key = ''.join(random.sample(string.ascii_letters + string.digits, 32 - len(begin)))
     new_key = begin + new_key
     return new_key
 
 
 def add_key(duration):
-    '''
+    """
     卡密添加到数据库中
-    '''
+    """
     new_key = generate_key()
     key_dict[new_key] = duration
     return new_key
 
 
 def get_key_list():
-    '''
+    """
     获取全部的卡密列表
-    '''
+    """
     key_list = []
     for key, value in key_dict.iteritems():
         key_list.append({'key': key, 'duration': value})
@@ -45,9 +45,9 @@ def get_key_list():
 
 
 def del_key(key):
-    '''
+    """
     删除一张卡密, 成功返回True
-    '''
+    """
     if key in key_dict:
         key_dict.pop(key)
         return True
@@ -55,9 +55,9 @@ def del_key(key):
 
 
 def update_key(key, duration):
-    '''
+    """
     更新一张卡密,成功返回True
-    '''
+    """
     if duration <= 0:
         # 禁止将有效期更新为0, 因为检验卡密时以0为无效标志
         return False
@@ -68,9 +68,9 @@ def update_key(key, duration):
 
 
 def query_key(key):
-    '''
+    """
     检查一张卡密, 有效则返回可以增加的授权时间, 无效则返回0
-    '''
+    """
     if key in key_dict:
         return key_dict[key]
     else:
@@ -78,10 +78,10 @@ def query_key(key):
 
 
 def check_group(gid):
-    '''
-    检查一个群是否有授权, 如果有返回过期时间（datetime格式）, 否则返回False. 
+    """
+    检查一个群是否有授权, 如果有返回过期时间（datetime格式）, 否则返回False.
     注意无论Bot是否加入此群都会返回
-    '''
+    """
     if gid in group_dict:
         return group_dict[gid]
     else:
@@ -89,9 +89,9 @@ def check_group(gid):
 
 
 async def reg_group(gid, key):
-    '''
+    """
     为一个群充值, 卡密无效则返回False, 否则返回剩余有效期（datatime格式）
-    '''
+    """
     days = query_key(key)
     if days == 0:
         return False
@@ -101,14 +101,15 @@ async def reg_group(gid, key):
 
 
 async def change_authed_time(gid, time_change=0, operate=''):
-    '''
+    """
     不使用卡密, 而直接对一个群的授权时间进行操作
-    '''
+    """
     if operate == 'clear':
         try:
             # 用try是因为可能会尝试给本来就无授权的群清空授权, 此种情况并不需要另外通知, 因为最终目的一致
             group_dict.pop(gid)
-        except:
+        except Exception as e:
+            print(e)
             pass
         await flush_group()
         return 0
@@ -121,23 +122,24 @@ async def change_authed_time(gid, time_change=0, operate=''):
         await flush_group()
     return group_dict[gid]
 
+
 async def get_nickname(user_id):
-    '''
+    """
     获取用户昵称
-    '''
+    """
     uid = user_id
     user_info = await nonebot.get_bot().get_stranger_info(user_id=uid)
     return user_info['nickname']
 
 
 async def get_group_info(group_ids=0, info_type='group_name'):
-    '''
+    """
     1. 传入一个整型数字, 返回单个群指定信息, 格式为字典
     2. 传入一个list, 内含多个群号(int), 返回一个字典, 键为群号, 值为指定信息
     3. 不填入参数, 返回一个包含所有群号与指定信息的字典
     无论获取多少群信息, 均只有一次API的开销, 传入未加入的群时, 将自动忽略
     info_type支持group_id, group_name, max_member_count, member_count
-    '''
+    """
     group_info_all = await get_group_list_all()
     _gids = []
     _gnames = []
@@ -149,9 +151,13 @@ async def get_group_info(group_ids=0, info_type='group_name'):
 
     if group_ids == 0:
         return group_info_dir
-    if type(group_ids) == int:
+    if isinstance(group_ids, int):
         # 转为列表
         group_ids = [group_ids]
+        print(group_ids)
+    if isinstance(group_ids, str):
+        # 转为列表
+        group_ids = [int(group_ids)]
         print(group_ids)
 
     for key in list(group_info_dir.keys()):
@@ -164,9 +170,9 @@ async def get_group_info(group_ids=0, info_type='group_name'):
 
 
 async def get_authed_group_list():
-    '''
+    """
     获取已授权的群
-    '''
+    """
     authed_group_list = []
     group_name_dir = await get_group_info()
 
@@ -177,10 +183,11 @@ async def get_authed_group_list():
     return authed_group_list
 
 
+# noinspection ALL
 async def get_group_list_all():
-    '''
+    """
     获取所有群, 无论授权与否, 返回为原始类型(列表)
-    '''
+    """
     bot = nonebot.get_bot()
     self_ids = bot._wsr_api_clients.keys()
     for sid in self_ids:
@@ -188,15 +195,16 @@ async def get_group_list_all():
     return group_list
 
 
+# noinspection ALL
 async def process_group_msg(gid, expiration, title: str = '', end='', group_name_sp=''):
-    '''
+    """
     把查询消息处理为固定的格式 \n
     第一行为额外提醒信息（例如充值成功）\n
     群号：<群号> \n
     群名：<群名> \n
     授权到期：<到期时间> \n
     部分情况下, 可以通过指定群组名的方式来减少对API的调用次数（我并不知道这个对性能是否有大影响）
-    '''
+    """
     if group_name_sp == '':
         bot = nonebot.get_bot()
         self_ids = bot._wsr_api_clients.keys()
@@ -204,7 +212,8 @@ async def process_group_msg(gid, expiration, title: str = '', end='', group_name
             try:
                 group_info = await bot.get_group_info(self_id=sid, group_id=gid)
                 group_name = group_info['group_name']
-            except:
+            except Exception as e:
+                print(e)
                 group_name = '未知(Bot未加入此群)'
     else:
         group_name = group_name_sp
@@ -216,9 +225,9 @@ async def process_group_msg(gid, expiration, title: str = '', end='', group_name
 
 
 async def new_group_check(gid):
-    '''
+    """
     加入新群时检查此群是否符合条件,如果有试用期则会自动添加试用期授权时间, 同时添加试用标志
-    '''
+    """
     if gid in group_dict:
         time_left = group_dict[gid] - datetime.now()
 
@@ -240,19 +249,20 @@ async def new_group_check(gid):
 
 
 async def transfer_group(old_gid, new_gid):
-    '''
+    """
     转移授权,新群如果已经有时长了则在现有时长上增加
-    '''
+    """
     today = datetime.now()
     left_time = group_dict[old_gid] - today if old_gid in group_dict else timedelta(days=0)
     group_dict[new_gid] = left_time + (group_dict[new_gid] if new_gid in group_dict else today)
     group_dict.pop(old_gid)
     await flush_group()
 
+
 async def gun_group(group_id, reason='管理员操作'):
-    '''
+    """
     退出群聊, 同时会发送消息, 说明退群原因
-    '''
+    """
     gid = group_id
     msg = config.GROUP_LEAVE_MSG
     msg += reason
@@ -269,9 +279,9 @@ async def gun_group(group_id, reason='管理员操作'):
 
 
 async def notify_group(group_id, txt):
-    '''
+    """
     发送自定义提醒广播,顺带解决了HoshinoBot和Yobot的广播短板
-    '''
+    """
     gid = group_id
     try:
         await nonebot.get_bot().send_group_msg(group_id=gid, message=txt)
@@ -279,16 +289,17 @@ async def notify_group(group_id, txt):
         return False
     return True
 
+
 async def notify_master(txt):
-    '''
+    """
     通知主人
-    '''
+    """
     try:
         await nonebot.get_bot().send_private_msg(user_id=SUPERUSERS[0], message=txt)
     except nonebot.CQHttpError:
         return False
     return True
-    
+
 
 def time_now():
     return time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
@@ -305,9 +316,9 @@ LOG_LIST = [
 
 
 def log(info, log_type='debug'):
-    '''
+    """
     记录日志, 保存位置为HoshinoBot/logs/authMS.log
-    '''
+    """
     if not config.LOG:
         return
     if not config.DEBUG and log_type not in LOG_LIST:
@@ -315,14 +326,15 @@ def log(info, log_type='debug'):
         return
 
     file_name = 'log/authMS.log'
-    with open(file_name, 'a', encoding='utf-8') as l:
-        l.writelines(f"[{time_now()}]")
-        l.writelines(info)
-        l.writelines('\n')
+    with open(file_name, 'a', encoding='utf-8') as f:
+        f.writelines(f"[{time_now()}]")
+        f.writelines(info)
+        f.writelines('\n')
 
 
+# noinspection ALL
 def allowlist(group_id, operator='none', nocheck='no_number_check'):
-    '''
+    """
     operator------
         none: 检查一个群或人是否在白名单中, 不在时返回值为not in
         add: 增加白名单
@@ -332,7 +344,7 @@ def allowlist(group_id, operator='none', nocheck='no_number_check'):
         no_number_check: 不检查人数
         no_auth_check: 不检查授权(永久有效)
         no_check: 全部不检查
-    '''
+    """
 
     ALLOWLIST_PATH = os.path.expanduser('~/.hoshino/authMS/allowlist.json')
     if os.path.exists(ALLOWLIST_PATH):
@@ -374,8 +386,9 @@ def allowlist(group_id, operator='none', nocheck='no_number_check'):
 
 
 # 这个没写完别看了-------------------------------------------
+# noinspection ALL
 async def set_block_list(group_id, operator_id, reason='no reason'):
-    '''
+    """
     将一个群添加到黑名单, 目前仅本地拉黑, 未来可能支持......算了不画饼了
     可以重复拉黑, 以更新reason
 
@@ -387,7 +400,7 @@ async def set_block_list(group_id, operator_id, reason='no reason'):
     group_info: 直接传入bot.get_group_info()返回的原始信息
     group_member_list: 直接传入bot.get_group_member_list()返回的群所有成员信息
     operator_name: 操作者昵称
-    '''
+    """
 
     BLOCKLIST_PATH = os.path.expanduser('~/.hoshino/authMS/blocklist.json')
 
@@ -410,12 +423,13 @@ async def set_block_list(group_id, operator_id, reason='no reason'):
     pass
 
 
+# noinspection ALL
 def get_list(list_type='allowlist'):
-    '''
+    """
     list_type可选blocklist和allowlist
     保存位置: ~./.hoshino/authMS/blocklist.json和allowlist.json
     为保持兼容性, 会将所有键值转化为int
-    '''
+    """
     LIST_PATH = os.path.expanduser(f'~/.hoshino/authMS/{list_type}.json')
     if os.path.exists(LIST_PATH):
         with open(LIST_PATH, 'r', encoding='utf-8') as rf:
